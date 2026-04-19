@@ -1,0 +1,56 @@
+<!-- BEGIN:nextjs-agent-rules -->
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+<!-- END:nextjs-agent-rules -->
+
+# Hundred and Ten Web Frontend
+
+## Stack
+
+- Next.js 16, React 19, TypeScript, Tailwind CSS v4
+- Static export (`output: 'export'`) — no server components, no API routes, no middleware
+- Firebase auth (client-side only, Google sign-in)
+- Azure Static Web App deployment
+
+## Project Structure
+
+- `app/` at repo root (no `src/` directory)
+- `components/` for shared UI components
+- `lib/` for API client, hooks, and utilities
+- `infrastructure/` for OpenTofu (Azure + GitHub)
+- `.github/workflows/` for CI/CD
+- Path alias: `@/*` maps to `./*`
+
+## Commands
+
+```bash
+npm run dev        # Start dev server
+npm run build      # Build static export to out/
+npm run lint       # ESLint check
+npm run lint:fix   # ESLint autofix
+npm run clean      # Remove .next and out directories
+```
+
+## Conventions
+
+- All pages are client-side rendered (`'use client'` where needed)
+- API base URL from `NEXT_PUBLIC_API_URL` env var (never hardcoded)
+- Auth tokens managed in-memory by Firebase SDK
+- Tailwind v4 configured via CSS (`@import 'tailwindcss'` + `@theme` in `app/globals.css`), not `tailwind.config.js`
+- PostCSS plugin: `@tailwindcss/postcss`
+- ESLint 9 flat config with prettier
+- Mobile-first design — 44px minimum touch targets, horizontal scroll for card hand
+
+## API Patterns
+
+- Backend at `NEXT_PUBLIC_API_URL`, all endpoints scoped under `/players/{player_id}/...`
+- Search endpoints are POST with JSON body `{ searchText, offset, limit }`
+- Action/start endpoints return `Event[]`, not updated game — must re-fetch after
+- Backend enforces all authorization; frontend role checks are cosmetic
+
+## Testing
+
+- Unit tests required for API client (`lib/api/client.ts`) and polling hook (`lib/hooks/use-polling.ts`)
+- Type checking: `npx tsc --noEmit`
+- Build verification: `npm run build` must produce `out/` directory
