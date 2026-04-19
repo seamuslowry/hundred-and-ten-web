@@ -20,7 +20,7 @@ export function searchLobbies(
   playerId: string,
   query: SearchRequest,
 ): Promise<Lobby[]> {
-  return apiFetch(`/players/${playerId}/lobbies`, {
+  return apiFetch(`/players/${playerId}/lobbies/search`, {
     method: "POST",
     body: JSON.stringify(query),
   });

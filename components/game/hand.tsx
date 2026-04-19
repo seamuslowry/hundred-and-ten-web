@@ -8,7 +8,6 @@ interface HandProps {
   selectedCards?: CardType[];
   suggestedCards?: CardType[];
   selectable?: boolean;
-  multiSelect?: boolean;
   disabled?: boolean;
   onSelect?: (card: CardType) => void;
 }
