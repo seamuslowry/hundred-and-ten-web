@@ -9,8 +9,7 @@ interface LobbyCardProps {
 }
 
 export function LobbyCard({ lobby, isInvite }: LobbyCardProps) {
-  const playerCount =
-    1 + lobby.players.length; // organizer + players
+  const playerCount = 1 + lobby.players.length; // organizer + players
 
   return (
     <Link

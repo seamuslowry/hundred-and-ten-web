@@ -55,7 +55,10 @@ function NewLobbyContent() {
         <div>
           <label className="block text-sm font-medium">Visibility</label>
           <div className="mt-1 flex gap-4">
-            <label className="flex items-center gap-2" style={{ minHeight: 44 }}>
+            <label
+              className="flex items-center gap-2"
+              style={{ minHeight: 44 }}
+            >
               <input
                 type="radio"
                 name="accessibility"
@@ -65,7 +68,10 @@ function NewLobbyContent() {
               />
               Public
             </label>
-            <label className="flex items-center gap-2" style={{ minHeight: 44 }}>
+            <label
+              className="flex items-center gap-2"
+              style={{ minHeight: 44 }}
+            >
               <input
                 type="radio"
                 name="accessibility"

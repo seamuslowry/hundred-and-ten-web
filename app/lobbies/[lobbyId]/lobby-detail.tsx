@@ -6,6 +6,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { MemberList } from "@/components/lobby/member-list";
 import { PlayerSearch } from "@/components/lobby/player-search";
 import { useAuth } from "@/lib/hooks/use-auth";
+import Link from "next/link";
 import {
   getLobby,
   getLobbyPlayers,
@@ -43,8 +44,29 @@ function LobbyDetailContent() {
   }, [user, lobbyId]);
 
   useEffect(() => {
-    fetchLobby();
-  }, [fetchLobby]);
+    if (!user) return;
+    let cancelled = false;
+    async function load() {
+      try {
+        const [lobbyData, players] = await Promise.all([
+          getLobby(user!.uid, lobbyId),
+          getLobbyPlayers(user!.uid, lobbyId),
+        ]);
+        if (cancelled) return;
+        setLobby(lobbyData);
+        setPlayerDetails(new Map(players.map((p) => [p.id, p])));
+      } catch (e) {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Failed to load lobby");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, lobbyId]);
 
   const isOrganizer = lobby?.organizer.id === user?.uid;
   const isMember =
@@ -95,6 +117,12 @@ function LobbyDetailContent() {
 
   return (
     <main className="mx-auto max-w-md p-4">
+      <Link
+        href="/lobbies"
+        className="mb-3 inline-flex min-h-[44px] items-center text-sm text-blue-600 hover:underline"
+      >
+        &larr; Back to lobbies
+      </Link>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{lobby.name}</h1>
         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">

@@ -50,7 +50,11 @@ function LobbiesContent() {
         <Link
           href="/lobbies/new"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          style={{ minHeight: 44, display: "inline-flex", alignItems: "center" }}
+          style={{
+            minHeight: 44,
+            display: "inline-flex",
+            alignItems: "center",
+          }}
         >
           New Lobby
         </Link>

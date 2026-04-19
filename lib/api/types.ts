@@ -116,7 +116,6 @@ export interface SearchRequest {
   limit: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ApiEvent {
   [key: string]: unknown;
 }

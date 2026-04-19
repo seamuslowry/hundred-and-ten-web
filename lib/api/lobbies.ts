@@ -1,10 +1,5 @@
 import { apiFetch } from "./client";
-import type {
-  WaitingGame,
-  Player,
-  SearchRequest,
-  ApiEvent,
-} from "./types";
+import type { WaitingGame, Player, SearchRequest, ApiEvent } from "./types";
 
 export function createLobby(
   playerId: string,
@@ -34,10 +29,7 @@ export function searchLobbies(
   });
 }
 
-export function joinLobby(
-  playerId: string,
-  lobbyId: string,
-): Promise<void> {
+export function joinLobby(playerId: string, lobbyId: string): Promise<void> {
   return apiFetch(`/players/${playerId}/lobbies/${lobbyId}/join`, {
     method: "PUT",
   });

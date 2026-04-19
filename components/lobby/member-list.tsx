@@ -9,10 +9,7 @@ interface MemberListProps {
   playerDetails: Map<string, Player>;
 }
 
-function playerName(
-  pig: PlayerInGame,
-  details: Map<string, Player>,
-): string {
+function playerName(pig: PlayerInGame, details: Map<string, Player>): string {
   return details.get(pig.id)?.name || pig.id;
 }
 
@@ -34,10 +31,7 @@ export function MemberList({
             </span>
           </li>
           {players.map((p) => (
-            <li
-              key={p.id}
-              className="rounded-lg px-2 py-1 text-sm"
-            >
+            <li key={p.id} className="rounded-lg px-2 py-1 text-sm">
               {playerName(p, playerDetails)}
             </li>
           ))}
@@ -45,9 +39,7 @@ export function MemberList({
       </div>
       {invitees.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-gray-500">
-            Pending Invites
-          </h3>
+          <h3 className="text-sm font-medium text-gray-500">Pending Invites</h3>
           <ul className="mt-1 space-y-1">
             {invitees.map((p) => (
               <li
