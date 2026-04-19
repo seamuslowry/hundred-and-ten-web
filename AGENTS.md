@@ -20,6 +20,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `lib/` for API client, hooks, and utilities
 - `infrastructure/` for OpenTofu (Azure + GitHub)
 - `.github/workflows/` for CI/CD
+- `docs/solutions/` — documented solutions to past problems, organized by category with YAML frontmatter (`module`, `tags`, `problem_type`)
 - Path alias: `@/*` maps to `./*`
 
 ## Commands
@@ -34,7 +35,7 @@ npm run clean      # Remove .next and out directories
 
 ## Conventions
 
-- All pages are client-side rendered (`'use client'` where needed)
+- SSR by default; add `'use client'` only to components that use hooks or event handlers (not pure display components)
 - API base URL from `NEXT_PUBLIC_API_URL` env var (never hardcoded)
 - Auth tokens managed in-memory by Firebase SDK
 - Tailwind v4 configured via CSS (`@import 'tailwindcss'` + `@theme` in `app/globals.css`), not `tailwind.config.js`
