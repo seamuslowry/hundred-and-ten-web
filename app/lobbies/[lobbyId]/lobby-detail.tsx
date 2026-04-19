@@ -13,13 +13,13 @@ import {
   joinLobby,
   startGame,
 } from "@/lib/api/lobbies";
-import type { WaitingGame, Player } from "@/lib/api/types";
+import type { Lobby, Player } from "@/lib/api/types";
 
 function LobbyDetailContent() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const { user } = useAuth();
   const router = useRouter();
-  const [lobby, setLobby] = useState<WaitingGame | null>(null);
+  const [lobby, setLobby] = useState<Lobby | null>(null);
   const [playerDetails, setPlayerDetails] = useState<Map<string, Player>>(
     new Map(),
   );

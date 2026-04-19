@@ -51,7 +51,7 @@ export interface OtherPlayerInRound extends PlayerInGame {
 
 export type PlayerInRound = SelfInRound | OtherPlayerInRound;
 
-export interface WaitingGame {
+export interface Lobby {
   id: string;
   name: string;
   accessibility: "PUBLIC" | "PRIVATE";
@@ -96,7 +96,7 @@ export interface CompletedGame {
   players: PlayerInGame[];
 }
 
-export type Game = WaitingGame | StartedGame | CompletedGame;
+export type Game = StartedGame | CompletedGame;
 
 export type GameAction =
   | { type: "BID"; amount: BidValue }

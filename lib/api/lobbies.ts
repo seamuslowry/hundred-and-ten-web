@@ -1,28 +1,25 @@
 import { apiFetch } from "./client";
-import type { WaitingGame, Player, SearchRequest, ApiEvent } from "./types";
+import type { Lobby, Player, SearchRequest, ApiEvent } from "./types";
 
 export function createLobby(
   playerId: string,
   name: string,
   accessibility: "PUBLIC" | "PRIVATE",
-): Promise<WaitingGame> {
+): Promise<Lobby> {
   return apiFetch(`/players/${playerId}/lobbies`, {
     method: "POST",
     body: JSON.stringify({ name, accessibility }),
   });
 }
 
-export function getLobby(
-  playerId: string,
-  lobbyId: string,
-): Promise<WaitingGame> {
+export function getLobby(playerId: string, lobbyId: string): Promise<Lobby> {
   return apiFetch(`/players/${playerId}/lobbies/${lobbyId}`);
 }
 
 export function searchLobbies(
   playerId: string,
   query: SearchRequest,
-): Promise<WaitingGame[]> {
+): Promise<Lobby[]> {
   return apiFetch(`/players/${playerId}/lobbies`, {
     method: "POST",
     body: JSON.stringify(query),

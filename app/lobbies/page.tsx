@@ -5,12 +5,12 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { LobbyCard } from "@/components/lobby/lobby-card";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { searchLobbies } from "@/lib/api/lobbies";
-import type { WaitingGame } from "@/lib/api/types";
+import type { Lobby } from "@/lib/api/types";
 import Link from "next/link";
 
 function LobbiesContent() {
   const { user } = useAuth();
-  const [lobbies, setLobbies] = useState<WaitingGame[]>([]);
+  const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

@@ -1,10 +1,10 @@
 "use client";
 
-import type { WaitingGame } from "@/lib/api/types";
+import type { Lobby } from "@/lib/api/types";
 import Link from "next/link";
 
 interface LobbyCardProps {
-  lobby: WaitingGame;
+  lobby: Lobby;
   isInvite?: boolean;
 }
 
