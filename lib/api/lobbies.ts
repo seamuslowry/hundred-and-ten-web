@@ -27,8 +27,9 @@ export function searchLobbies(
 }
 
 export function joinLobby(playerId: string, lobbyId: string): Promise<void> {
-  return apiFetch(`/players/${playerId}/lobbies/${lobbyId}/join`, {
-    method: "PUT",
+  return apiFetch(`/players/${playerId}/lobbies/${lobbyId}/players`, {
+    method: "POST",
+    body: JSON.stringify({ type: "JOIN" }),
   });
 }
 
@@ -37,10 +38,10 @@ export function invitePlayer(
   lobbyId: string,
   inviteeId: string,
 ): Promise<void> {
-  return apiFetch(
-    `/players/${playerId}/lobbies/${lobbyId}/invitees/${inviteeId}`,
-    { method: "PUT" },
-  );
+  return apiFetch(`/players/${playerId}/lobbies/${lobbyId}/players`, {
+    method: "POST",
+    body: JSON.stringify({ type: "INVITE", player_id: inviteeId }),
+  });
 }
 
 export function startGame(
@@ -48,7 +49,7 @@ export function startGame(
   lobbyId: string,
 ): Promise<ApiEvent[]> {
   return apiFetch(`/players/${playerId}/lobbies/${lobbyId}/start`, {
-    method: "PUT",
+    method: "POST",
   });
 }
 

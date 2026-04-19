@@ -7,3 +7,4 @@
     "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://hundredandten.azurewebsites.net https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://*.firebaseapp.com https://accounts.google.com; img-src 'self' https://*.googleusercontent.com data:;"
   }
 }
+

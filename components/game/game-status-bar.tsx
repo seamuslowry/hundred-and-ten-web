@@ -1,5 +1,3 @@
-"use client";
-
 import type { GameStatus } from "@/lib/api/types";
 
 interface GameStatusBarProps {

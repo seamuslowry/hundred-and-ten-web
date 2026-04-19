@@ -1,5 +1,3 @@
-"use client";
-
 import type { Lobby } from "@/lib/api/types";
 import Link from "next/link";
 

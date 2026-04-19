@@ -132,8 +132,8 @@ describe("apiFetch", () => {
 
     const error = await apiFetch("/test").catch((e) => e);
     expect(error).toBeInstanceOf(ApiError);
-    expect(error.message).toBe("Not found");
-    expect(error.status).toBe(404);
+    expect((error as ApiError).message).toBe("Not found");
+    expect((error as ApiError).status).toBe(404);
   });
 
   it("parses array detail errors", async () => {

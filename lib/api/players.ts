@@ -9,7 +9,7 @@ export function searchPlayers(
   playerId: string,
   query: SearchRequest,
 ): Promise<Player[]> {
-  return apiFetch(`/players/${playerId}/players`, {
+  return apiFetch(`/players/${playerId}/search`, {
     method: "POST",
     body: JSON.stringify(query),
   });

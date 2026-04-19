@@ -9,7 +9,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Stack
 
 - Next.js 16, React 19, TypeScript, Tailwind CSS v4
-- Static export (`output: 'export'`) — no server components, no API routes, no middleware
+- SSR with Azure Static Web Apps hybrid rendering
 - Firebase auth (client-side only, Google sign-in)
 - Azure Static Web App deployment
 
@@ -26,7 +26,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ```bash
 npm run dev        # Start dev server
-npm run build      # Build static export to out/
+npm run build      # Build for deployment
 npm run lint       # ESLint check
 npm run lint:fix   # ESLint autofix
 npm run clean      # Remove .next and out directories
@@ -53,4 +53,4 @@ npm run clean      # Remove .next and out directories
 
 - Unit tests required for API client (`lib/api/client.ts`) and polling hook (`lib/hooks/use-polling.ts`)
 - Type checking: `npx tsc --noEmit`
-- Build verification: `npm run build` must produce `out/` directory
+- Build verification: `npm run build` must produce `.next/` directory

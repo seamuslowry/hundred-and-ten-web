@@ -1,5 +1,3 @@
-"use client";
-
 interface ScoreBoardProps {
   scores: Record<string, number>;
   currentPlayerId: string;

@@ -20,8 +20,8 @@ export function performAction(
   gameId: string,
   action: GameAction,
 ): Promise<ApiEvent[]> {
-  return apiFetch(`/players/${playerId}/games/${gameId}/action`, {
-    method: "PUT",
+  return apiFetch(`/players/${playerId}/games/${gameId}/actions`, {
+    method: "POST",
     body: JSON.stringify(action),
   });
 }

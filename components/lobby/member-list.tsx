@@ -1,5 +1,3 @@
-"use client";
-
 import type { PlayerInGame, Player } from "@/lib/api/types";
 
 interface MemberListProps {

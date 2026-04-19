@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { ErrorBoundary } from "./error-boundary";
 import { AppHeader } from "./app-header";
