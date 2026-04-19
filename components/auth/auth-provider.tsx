@@ -15,6 +15,7 @@ import {
   type User,
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase";
+import { putPlayer } from "@/lib/api/players";
 
 interface AuthContextValue {
   user: User | null;
@@ -54,7 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async () => {
     const auth = getFirebaseAuth();
     if (!auth) return;
-    await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    // Register/refresh player in backend after sign-in
+    await putPlayer(result.user.uid);
   }, []);
 
   const signOut = useCallback(async () => {
