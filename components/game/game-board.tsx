@@ -13,7 +13,7 @@ import type {
 import { performAction } from "@/lib/api/games";
 import { GameStatusBar } from "./game-status-bar";
 import { ScoreBoard } from "./score-board";
-import { Hand, cardEquals } from "./hand";
+import { Hand } from "./hand";
 import { BidControls } from "./bid-controls";
 import { TrumpSelector } from "./trump-selector";
 import { DiscardControls } from "./discard-controls";
@@ -175,5 +175,3 @@ export function GameBoard({
     </div>
   );
 }
-
-export { cardEquals };

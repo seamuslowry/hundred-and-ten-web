@@ -25,7 +25,7 @@ export function usePolling<T>({
   enabled = true,
 }: UsePollingOptions<T>): UsePollingResult<T> {
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<Error | null>(null);
   const [isStale, setIsStale] = useState(false);
 

@@ -48,15 +48,15 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
   });
 
   const started = game && isStartedGame(game) ? game : null;
-  const completed = game && !isStartedGame(game) ? game : null;
+  const completed = game?.status === "WON" ? (game as CompletedGame) : null;
 
   const myTurn = started?.active_player_id === playerId;
 
-  const self = started?.players.find((p) => p.id === playerId && isSelf(p)) as
-    | SelfInRound
-    | undefined;
+  const selfPlayer = started?.players.find(
+    (p): p is SelfInRound => p.id === playerId && isSelf(p),
+  );
 
-  const hand = self?.hand ?? [];
+  const hand = selfPlayer?.hand ?? [];
 
   return {
     game,

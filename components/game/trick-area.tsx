@@ -1,37 +1,13 @@
 "use client";
 
 import type { Trick, Card as CardType } from "@/lib/api/types";
+import { SUIT_SYMBOL, NUMBER_LABEL } from "./card-labels";
 
 interface TrickAreaProps {
   tricks: Trick[];
   /** Map player IDs to display names (truncated IDs used as fallback) */
   playerNames?: Map<string, string>;
 }
-
-const SUIT_SYMBOL: Record<string, string> = {
-  HEARTS: "\u2665",
-  DIAMONDS: "\u2666",
-  CLUBS: "\u2663",
-  SPADES: "\u2660",
-  JOKER: "\u2606",
-};
-
-const NUMBER_LABEL: Record<string, string> = {
-  TWO: "2",
-  THREE: "3",
-  FOUR: "4",
-  FIVE: "5",
-  SIX: "6",
-  SEVEN: "7",
-  EIGHT: "8",
-  NINE: "9",
-  TEN: "10",
-  JACK: "J",
-  QUEEN: "Q",
-  KING: "K",
-  ACE: "A",
-  JOKER: "\u2606",
-};
 
 function cardLabel(card: CardType): string {
   if (card.suit === "JOKER") return "Joker";

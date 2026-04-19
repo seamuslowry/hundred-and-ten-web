@@ -63,7 +63,7 @@ export interface WaitingGame {
 export interface StartedGame {
   id: string;
   name: string;
-  status: GameStatus;
+  status: Exclude<GameStatus, "WON">;
   scores: Record<string, number>;
   dealer_player_id: string;
   bidder_player_id: string | null;

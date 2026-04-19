@@ -16,16 +16,38 @@ export class ApiError extends Error {
   }
 }
 
+export class TimeoutError extends Error {
+  constructor(timeoutMs: number) {
+    super(`Request timed out after ${timeoutMs}ms`);
+    this.name = "TimeoutError";
+  }
+}
+
+const DEFAULT_TIMEOUT_MS = 10_000;
+
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw new TimeoutError(timeoutMs);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function getAuthToken(): Promise<string | null> {
   const auth = getFirebaseAuth();
   if (!auth?.currentUser) return null;
   return auth.currentUser.getIdToken();
-}
-
-async function refreshAuthToken(): Promise<string | null> {
-  const auth = getFirebaseAuth();
-  if (!auth?.currentUser) return null;
-  return auth.currentUser.getIdToken(true);
 }
 
 function parseErrorMessage(body: unknown): string {
@@ -41,7 +63,6 @@ function parseErrorMessage(body: unknown): string {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (response.ok) {
-    if (response.status === 204) return undefined as T;
     return response.json();
   }
 
@@ -70,30 +91,10 @@ export async function apiFetch<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
+  const response = await fetchWithTimeout(`${baseUrl}${path}`, {
     ...options,
     headers,
   });
-
-  // On 401, try refreshing the token and retrying once
-  if (response.status === 401 && token) {
-    const newToken = await refreshAuthToken();
-    if (newToken) {
-      headers["Authorization"] = `Bearer ${newToken}`;
-      const retryResponse = await fetch(`${baseUrl}${path}`, {
-        ...options,
-        headers,
-      });
-      return handleResponse<T>(retryResponse);
-    }
-
-    // Token refresh failed — redirect to sign-in
-    if (typeof window !== "undefined") {
-      const returnTo = window.location.pathname;
-      window.location.href = `/?returnTo=${encodeURIComponent(returnTo)}`;
-    }
-    throw new ApiError(401, "Authentication required");
-  }
 
   return handleResponse<T>(response);
 }
