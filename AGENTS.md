@@ -9,17 +9,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Stack
 
 - Next.js 16, React 19, TypeScript, Tailwind CSS v4
-- SSR with Azure Static Web Apps hybrid rendering
 - Firebase auth (client-side only, Google sign-in)
-- Azure Static Web App deployment
 
 ## Project Structure
 
 - `app/` at repo root (no `src/` directory)
 - `components/` for shared UI components
 - `lib/` for API client, hooks, and utilities
-- `infrastructure/` for OpenTofu (Azure + GitHub)
-- `.github/workflows/` for CI/CD
 - `docs/solutions/` — documented solutions to past problems, organized by category with YAML frontmatter (`module`, `tags`, `problem_type`)
 - Path alias: `@/*` maps to `./*`
 
