@@ -8,14 +8,12 @@ interface DiscardControlsProps {
   cards: CardType[];
   disabled?: boolean;
   onDiscard: (cards: CardType[]) => void;
-  suggestedCards?: CardType[];
 }
 
 export function DiscardControls({
   cards,
   disabled,
   onDiscard,
-  suggestedCards = [],
 }: DiscardControlsProps) {
   const [selected, setSelected] = useState<CardType[]>([]);
   const [confirming, setConfirming] = useState(false);
@@ -42,7 +40,6 @@ export function DiscardControls({
       <Hand
         cards={cards}
         selectedCards={selected}
-        suggestedCards={suggestedCards}
         selectable
         disabled={disabled}
         onSelect={toggleCard}

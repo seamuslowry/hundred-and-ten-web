@@ -6,7 +6,6 @@ import { Card } from "./card";
 interface HandProps {
   cards: CardType[];
   selectedCards?: CardType[];
-  suggestedCards?: CardType[];
   selectable?: boolean;
   disabled?: boolean;
   onSelect?: (card: CardType) => void;
@@ -23,7 +22,6 @@ function cardEquals(a: CardType, b: CardType): boolean {
 export function Hand({
   cards,
   selectedCards = [],
-  suggestedCards = [],
   selectable = false,
   disabled = false,
   onSelect,
@@ -39,7 +37,6 @@ export function Hand({
             key={cardKey(card)}
             card={card}
             selected={selectedCards.some((c) => cardEquals(c, card))}
-            suggested={suggestedCards.some((c) => cardEquals(c, card))}
             disabled={disabled || !selectable}
             onClick={selectable && onSelect ? () => onSelect(card) : undefined}
           />

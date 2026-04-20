@@ -4,7 +4,6 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { GameBoard } from "@/components/game/game-board";
 import { ScoreBoard } from "@/components/game/score-board";
 import { useGameState } from "@/lib/hooks/use-game-state";
-import { useSuggestions } from "@/lib/hooks/use-suggestions";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -22,13 +21,6 @@ function GameContent() {
     phase,
     refetch,
   } = useGameState({ gameId });
-
-  const { suggestions, showHints, toggleHints, hasSuggestions } =
-    useSuggestions({
-      playerId,
-      gameId,
-      myTurn,
-    });
 
   if (loading) {
     return (
@@ -76,12 +68,7 @@ function GameContent() {
           isStale={isStale}
           playerId={playerId}
           onActionComplete={refetch}
-          suggestions={suggestions}
-          showHints={showHints}
-          hasSuggestions={hasSuggestions}
-          onToggleHints={toggleHints}
         />
-        {/* Sidebar: visible only at lg+; ScoreBoard inside GameBoard hidden at lg+ */}
         <aside className="hidden lg:flex lg:flex-col lg:gap-4">
           <ScoreBoard scores={scores} currentPlayerId={playerId} />
         </aside>

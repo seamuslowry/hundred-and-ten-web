@@ -8,7 +8,6 @@ import type {
   GameAction,
   BidValue,
   SelectableSuit,
-  Suggestion,
 } from "@/lib/api/types";
 import { performAction } from "@/lib/api/games";
 import { GameStatusBar } from "./game-status-bar";
@@ -19,7 +18,6 @@ import { TrumpSelector } from "./trump-selector";
 import { DiscardControls } from "./discard-controls";
 import { TrickArea } from "./trick-area";
 import { TrickHistory } from "./trick-history";
-import { SuggestionToggle } from "./suggestion-toggle";
 
 interface GameBoardProps {
   started: StartedGame | null;
@@ -29,10 +27,6 @@ interface GameBoardProps {
   isStale: boolean;
   playerId: string;
   onActionComplete: () => Promise<void>;
-  suggestions: Suggestion[];
-  showHints: boolean;
-  hasSuggestions: boolean;
-  onToggleHints: () => void;
 }
 
 export function GameBoard({
@@ -43,10 +37,6 @@ export function GameBoard({
   isStale,
   playerId,
   onActionComplete,
-  suggestions,
-  showHints,
-  hasSuggestions,
-  onToggleHints,
 }: GameBoardProps) {
   const [actionInFlight, setActionInFlight] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -64,24 +54,6 @@ export function GameBoard({
       setActionInFlight(false);
     }
   }
-
-  // Extract suggestion data for current phase
-  const suggestedBids = suggestions
-    .filter((s): s is Suggestion & { type: "BID" } => s.type === "BID")
-    .map((s) => s.amount);
-
-  const suggestedSuit = suggestions.find(
-    (s): s is Suggestion & { type: "SELECT_TRUMP" } =>
-      s.type === "SELECT_TRUMP",
-  )?.suit;
-
-  const suggestedPlayCards = suggestions
-    .filter((s): s is Suggestion & { type: "PLAY" } => s.type === "PLAY")
-    .map((s) => s.card);
-
-  const suggestedDiscardCards = suggestions
-    .filter((s): s is Suggestion & { type: "DISCARD" } => s.type === "DISCARD")
-    .flatMap((s) => s.cards);
 
   if (completed) {
     return (
@@ -139,21 +111,11 @@ export function GameBoard({
         </div>
       )}
 
-      {/* Suggestion toggle */}
-      {myTurn && (
-        <SuggestionToggle
-          showHints={showHints}
-          hasSuggestions={hasSuggestions}
-          onToggle={onToggleHints}
-        />
-      )}
-
       {phase === "BIDDING" && myTurn && (
         <BidControls
           currentBid={started.bid_amount}
           disabled={actionInFlight}
           onBid={(amount: BidValue) => doAction({ type: "BID", amount })}
-          suggestedBids={suggestedBids}
         />
       )}
 
@@ -163,7 +125,6 @@ export function GameBoard({
           onSelect={(suit: SelectableSuit) =>
             doAction({ type: "SELECT_TRUMP", suit })
           }
-          suggestedSuit={suggestedSuit}
         />
       )}
 
@@ -174,7 +135,6 @@ export function GameBoard({
           onDiscard={(cards: CardType[]) =>
             doAction({ type: "DISCARD", cards })
           }
-          suggestedCards={suggestedDiscardCards}
         />
       )}
 
@@ -184,7 +144,6 @@ export function GameBoard({
           selectable
           disabled={actionInFlight}
           onSelect={(card: CardType) => doAction({ type: "PLAY", card })}
-          suggestedCards={suggestedPlayCards}
         />
       )}
 
