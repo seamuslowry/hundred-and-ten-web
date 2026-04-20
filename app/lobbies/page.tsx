@@ -60,7 +60,11 @@ function LobbiesContent() {
         </Link>
       </div>
 
-      {loading && <p className="mt-4 text-gray-500 dark:text-gray-400">Loading lobbies...</p>}
+      {loading && (
+        <p className="mt-4 text-gray-500 dark:text-gray-400">
+          Loading lobbies...
+        </p>
+      )}
       {error && <p className="mt-4 text-red-500 dark:text-red-400">{error}</p>}
 
       {!loading && !error && (

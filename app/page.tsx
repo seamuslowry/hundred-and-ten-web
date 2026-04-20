@@ -31,7 +31,9 @@ function HomeContent() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-4">
       <div className="text-center">
         <h1 className="text-4xl font-bold">Hundred and Ten</h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">The classic Irish card game</p>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
+          The classic Irish card game
+        </p>
       </div>
       <SignInButton />
     </main>

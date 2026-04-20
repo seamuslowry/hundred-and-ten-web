@@ -38,7 +38,10 @@ function NewLobbyContent() {
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium dark:text-gray-200">
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium dark:text-gray-200"
+          >
             Lobby Name
           </label>
           <input
@@ -53,7 +56,9 @@ function NewLobbyContent() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium dark:text-gray-200">Visibility</label>
+          <label className="block text-sm font-medium dark:text-gray-200">
+            Visibility
+          </label>
           <div className="mt-1 flex gap-4">
             <label
               className="flex items-center gap-2 dark:text-gray-200"

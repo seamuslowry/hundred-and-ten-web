@@ -34,7 +34,9 @@ export function TrumpSelector({
 }: TrumpSelectorProps) {
   return (
     <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-      <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">Select Trump</h3>
+      <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+        Select Trump
+      </h3>
       <div className="flex gap-3">
         {SUITS.map(({ suit, symbol, color }) => {
           const isSuggested = suggestedSuit === suit;

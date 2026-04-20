@@ -56,7 +56,8 @@ export function DiscardControls({
             confirming
               ? "bg-red-600 hover:bg-red-700"
               : "bg-blue-600 hover:bg-blue-700"
-          }`}        >
+          }`}
+        >
           {confirming
             ? `Confirm discard ${selected.length} card${selected.length !== 1 ? "s" : ""}?`
             : `Discard ${selected.length} card${selected.length !== 1 ? "s" : ""}`}

@@ -7,7 +7,6 @@ import { SUIT_SYMBOL, NUMBER_LABEL } from "./card-labels";
 interface TrickHistoryProps {
   tricks: Trick[];
   playerNames?: Map<string, string>;
-  playerId: string;
 }
 
 function cardLabel(card: CardType): string {
@@ -22,11 +21,7 @@ function cardTextColor(card: CardType): string {
   return "text-gray-900 dark:text-gray-100";
 }
 
-export function TrickHistory({
-  tricks,
-  playerNames,
-  playerId: _playerId,
-}: TrickHistoryProps) {
+export function TrickHistory({ tricks, playerNames }: TrickHistoryProps) {
   const [expanded, setExpanded] = useState(false);
 
   // All completed tricks = all except the last (current) trick
@@ -56,7 +51,10 @@ export function TrickHistory({
         <div className="mt-3 max-h-64 overflow-y-auto">
           <div className="flex flex-col gap-3">
             {completedTricks.map((trick, i) => (
-              <div key={i} className="rounded border border-gray-100 p-2 dark:border-gray-700">
+              <div
+                key={i}
+                className="rounded border border-gray-100 p-2 dark:border-gray-700"
+              >
                 <div className="mb-1 flex items-center gap-2">
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Trick {i + 1}

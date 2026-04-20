@@ -130,11 +130,7 @@ export function GameBoard({
       )}
 
       {phase === "TRICKS" && (
-        <TrickHistory
-          tricks={started.tricks}
-          playerNames={playerNames}
-          playerId={playerId}
-        />
+        <TrickHistory tricks={started.tricks} playerNames={playerNames} />
       )}
 
       {actionError && (

@@ -19,7 +19,9 @@ export function BidControls({
 }: BidControlsProps) {
   return (
     <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-      <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">Place Your Bid</h3>
+      <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+        Place Your Bid
+      </h3>
       <div className="flex flex-wrap gap-2">
         {BID_VALUES.map((value) => {
           const isSuggested = suggestedBids.includes(value);
