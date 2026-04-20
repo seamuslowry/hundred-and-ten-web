@@ -29,8 +29,8 @@ export function Hand({
   onSelect,
 }: HandProps) {
   return (
-    <div className="rounded-lg border p-4">
-      <h3 className="mb-2 text-sm font-medium text-gray-500">Your Hand</h3>
+    <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">Your Hand</h3>
       <div className="flex gap-2 overflow-x-auto pb-2">
         {cards.map((card) => (
           <Card

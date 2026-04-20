@@ -46,7 +46,7 @@ function LobbiesContent() {
   return (
     <main className="mx-auto max-w-2xl p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Lobbies</h1>
+        <h1 className="text-2xl font-bold dark:text-gray-100">Lobbies</h1>
         <Link
           href="/lobbies/new"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
@@ -60,8 +60,8 @@ function LobbiesContent() {
         </Link>
       </div>
 
-      {loading && <p className="mt-4 text-gray-500">Loading lobbies...</p>}
-      {error && <p className="mt-4 text-red-500">{error}</p>}
+      {loading && <p className="mt-4 text-gray-500 dark:text-gray-400">Loading lobbies...</p>}
+      {error && <p className="mt-4 text-red-500 dark:text-red-400">{error}</p>}
 
       {!loading && !error && (
         <div className="mt-4 space-y-2">
@@ -72,7 +72,7 @@ function LobbiesContent() {
             <LobbyCard key={lobby.id} lobby={lobby} />
           ))}
           {lobbies.length === 0 && (
-            <p className="text-gray-500">
+            <p className="text-gray-500 dark:text-gray-400">
               No lobbies yet. Create one to get started!
             </p>
           )}

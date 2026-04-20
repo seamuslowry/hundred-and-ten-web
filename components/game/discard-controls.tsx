@@ -56,8 +56,7 @@ export function DiscardControls({
             confirming
               ? "bg-red-600 hover:bg-red-700"
               : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
+          }`}        >
           {confirming
             ? `Confirm discard ${selected.length} card${selected.length !== 1 ? "s" : ""}?`
             : `Discard ${selected.length} card${selected.length !== 1 ? "s" : ""}`}
@@ -66,7 +65,7 @@ export function DiscardControls({
           <button
             type="button"
             onClick={() => setConfirming(false)}
-            className="min-h-[44px] rounded-lg bg-gray-200 px-4 py-2 font-medium text-gray-700 hover:bg-gray-300"
+            className="min-h-[44px] rounded-lg bg-gray-200 px-4 py-2 font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
           >
             Cancel
           </button>

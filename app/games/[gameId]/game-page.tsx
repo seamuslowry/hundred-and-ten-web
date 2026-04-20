@@ -2,6 +2,7 @@
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { GameBoard } from "@/components/game/game-board";
+import { ScoreBoard } from "@/components/game/score-board";
 import { useGameState } from "@/lib/hooks/use-game-state";
 import { useSuggestions } from "@/lib/hooks/use-suggestions";
 import { useParams } from "next/navigation";
@@ -53,28 +54,38 @@ function GameContent() {
     );
   }
 
+  const scores = started?.scores ?? completed?.scores ?? {};
+
   return (
-    <main className="mx-auto max-w-2xl p-4">
+    <main className="mx-auto w-full max-w-2xl p-4 md:max-w-4xl lg:max-w-6xl">
       <Link
         href="/lobbies"
         className="mb-3 inline-flex min-h-[44px] items-center text-sm text-blue-600 hover:underline"
       >
         &larr; Back to lobbies
       </Link>
-      <h1 className="mb-4 text-2xl font-bold">Game {gameId.slice(0, 8)}</h1>
-      <GameBoard
-        started={started}
-        completed={completed}
-        hand={hand}
-        myTurn={myTurn}
-        isStale={isStale}
-        playerId={playerId}
-        onActionComplete={refetch}
-        suggestions={suggestions}
-        showHints={showHints}
-        hasSuggestions={hasSuggestions}
-        onToggleHints={toggleHints}
-      />
+      <h1 className="mb-4 text-2xl font-bold dark:text-gray-100">
+        Game {gameId.slice(0, 8)}
+      </h1>
+      <div className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-6">
+        <GameBoard
+          started={started}
+          completed={completed}
+          hand={hand}
+          myTurn={myTurn}
+          isStale={isStale}
+          playerId={playerId}
+          onActionComplete={refetch}
+          suggestions={suggestions}
+          showHints={showHints}
+          hasSuggestions={hasSuggestions}
+          onToggleHints={toggleHints}
+        />
+        {/* Sidebar: visible only at lg+; ScoreBoard inside GameBoard hidden at lg+ */}
+        <aside className="hidden lg:flex lg:flex-col lg:gap-4">
+          <ScoreBoard scores={scores} currentPlayerId={playerId} />
+        </aside>
+      </div>
     </main>
   );
 }

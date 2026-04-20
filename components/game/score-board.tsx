@@ -9,14 +9,16 @@ export function ScoreBoard({ scores, currentPlayerId }: ScoreBoardProps) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="rounded-lg border p-4">
-      <h3 className="mb-2 text-sm font-medium text-gray-500">Scores</h3>
+    <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">Scores</h3>
       <div className="flex flex-col gap-1">
         {entries.map(([playerId, score]) => (
           <div
             key={playerId}
             className={`flex items-center justify-between rounded px-3 py-2 ${
-              playerId === currentPlayerId ? "bg-blue-50 font-semibold" : ""
+              playerId === currentPlayerId
+                ? "bg-blue-50 font-semibold dark:bg-blue-900"
+                : "dark:text-gray-200"
             }`}
           >
             <span className="text-sm">

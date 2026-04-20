@@ -124,8 +124,8 @@ function LobbyDetailContent() {
         &larr; Back to lobbies
       </Link>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{lobby.name}</h1>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+        <h1 className="text-2xl font-bold dark:text-gray-100">{lobby.name}</h1>
+        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">
           {lobby.accessibility === "PUBLIC" ? "Public" : "Private"}
         </span>
       </div>
@@ -165,7 +165,7 @@ function LobbyDetailContent() {
         </div>
       )}
 
-      {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-500 dark:text-red-400">{error}</p>}
     </main>
   );
 }

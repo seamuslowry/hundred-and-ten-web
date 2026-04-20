@@ -22,13 +22,13 @@ export function TrickArea({ tricks, playerNames }: TrickAreaProps) {
   }
 
   return (
-    <div className="rounded-lg border p-4">
+    <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
       <div className="mb-2 flex items-center gap-2">
-        <h3 className="text-sm font-medium text-gray-500">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
           Trick {tricks.length}
         </h3>
         {currentTrick.bleeding && (
-          <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600">
+          <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600 dark:bg-red-900 dark:text-red-300">
             Bleeding
           </span>
         )}
@@ -41,19 +41,21 @@ export function TrickArea({ tricks, playerNames }: TrickAreaProps) {
             play.card.suit === "HEARTS" || play.card.suit === "DIAMONDS";
           const textColor =
             play.card.suit === "JOKER"
-              ? "text-purple-600"
+              ? "text-purple-600 dark:text-purple-400"
               : isRed
-                ? "text-red-600"
-                : "text-gray-900";
+                ? "text-red-600 dark:text-red-400"
+                : "text-gray-900 dark:text-gray-100";
 
           return (
             <div
               key={`${play.player_id}-${play.card.number}-${play.card.suit}`}
               className={`flex min-w-[56px] flex-col items-center rounded-lg border-2 p-2 ${
-                isWinning ? "border-yellow-400 bg-yellow-50" : "border-gray-200"
+                isWinning
+                  ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-900"
+                  : "border-gray-200 dark:border-gray-600"
               }`}
             >
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {displayName(play.player_id)}
               </span>
               <span className={`text-lg font-bold ${textColor}`}>

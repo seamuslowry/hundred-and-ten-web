@@ -18,6 +18,7 @@ import { BidControls } from "./bid-controls";
 import { TrumpSelector } from "./trump-selector";
 import { DiscardControls } from "./discard-controls";
 import { TrickArea } from "./trick-area";
+import { TrickHistory } from "./trick-history";
 import { SuggestionToggle } from "./suggestion-toggle";
 
 interface GameBoardProps {
@@ -86,13 +87,15 @@ export function GameBoard({
     return (
       <div className="flex flex-col gap-4">
         <GameStatusBar phase="WON" myTurn={false} isStale={isStale} />
-        <div className="rounded-lg bg-green-50 p-6 text-center">
-          <h2 className="text-xl font-bold">Game Over</h2>
-          <p className="mt-2 text-lg">
+        <div className="rounded-lg bg-green-50 p-6 text-center dark:bg-green-900">
+          <h2 className="text-xl font-bold dark:text-gray-100">Game Over</h2>
+          <p className="mt-2 text-lg dark:text-gray-200">
             Winner: <span className="font-semibold">{completed.winner.id}</span>
           </p>
         </div>
-        <ScoreBoard scores={completed.scores} currentPlayerId={playerId} />
+        <div className="lg:hidden">
+          <ScoreBoard scores={completed.scores} currentPlayerId={playerId} />
+        </div>
       </div>
     );
   }
@@ -100,6 +103,9 @@ export function GameBoard({
   if (!started) return null;
 
   const phase = started.status;
+  const playerNames = new Map<string, string>(
+    started.players.map((p) => [p.id, p.id.slice(0, 8)]),
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -108,14 +114,31 @@ export function GameBoard({
         myTurn={myTurn}
         isStale={isStale}
         activePlayerId={started.active_player_id}
+        bidAmount={started.bid_amount}
+        bidderPlayerId={started.bidder_player_id}
+        dealerPlayerId={started.dealer_player_id}
+        playerId={playerId}
+        trump={started.trump}
       />
 
-      <ScoreBoard scores={started.scores} currentPlayerId={playerId} />
+      <div className="lg:hidden">
+        <ScoreBoard scores={started.scores} currentPlayerId={playerId} />
+      </div>
 
-      {phase === "TRICKS" && <TrickArea tricks={started.tricks} />}
+      {phase === "TRICKS" && (
+        <TrickArea tricks={started.tricks} playerNames={playerNames} />
+      )}
+
+      {phase === "TRICKS" && (
+        <TrickHistory
+          tricks={started.tricks}
+          playerNames={playerNames}
+          playerId={playerId}
+        />
+      )}
 
       {actionError && (
-        <div className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+        <div className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-900 dark:text-red-300">
           {actionError}
         </div>
       )}
