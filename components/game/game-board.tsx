@@ -126,6 +126,10 @@ export function GameBoard({
       {phase === "BIDDING" && myTurn && (
         <BidControls
           currentBid={started.bid_amount}
+          canMatchCurrentBid={
+            started.dealer_player_id != null &&
+            started.dealer_player_id === playerId
+          }
           disabled={actionInFlight}
           onBid={(amount: BidValue) => doAction({ type: "BID", amount })}
         />
