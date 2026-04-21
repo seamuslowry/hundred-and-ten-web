@@ -27,8 +27,8 @@ interface GameBoardProps {
   isStale: boolean;
   playerId: string;
   onActionComplete: () => Promise<void>;
-  onRefresh: () => Promise<void>;
-  isRefreshing: boolean;
+  onRefresh?: () => Promise<void>;
+  isRefreshing?: boolean;
 }
 
 export function GameBoard({

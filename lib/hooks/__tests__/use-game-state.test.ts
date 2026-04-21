@@ -11,8 +11,19 @@ vi.mock("@/lib/api/games", () => ({
   getGame: vi.fn(),
 }));
 
+vi.mock("../use-polling", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../use-polling")>();
+  return {
+    ...actual,
+    usePolling: vi.fn(actual.usePolling),
+  };
+});
+
 import { useAuth } from "../use-auth";
 import { getGame } from "@/lib/api/games";
+import { usePolling } from "../use-polling";
+
+const mockUsePolling = vi.mocked(usePolling);
 
 const mockUseAuth = vi.mocked(useAuth);
 const mockGetGame = vi.mocked(getGame);
@@ -163,5 +174,17 @@ describe("useGameState", () => {
     await waitFor(() => {
       expect(mockGetGame).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it("forwards the configured interval to usePolling when waiting for opponent", async () => {
+    renderHook(() => useGameState({ gameId: GAME_ID, interval: 30000 }));
+
+    await waitFor(() => {
+      expect(mockGetGame).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockUsePolling).toHaveBeenCalledWith(
+      expect.objectContaining({ interval: 30000 }),
+    );
   });
 });

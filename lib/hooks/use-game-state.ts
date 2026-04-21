@@ -62,7 +62,7 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
   const currentKey = `${game?.status ?? "none"}:${started?.active_player_id ?? ""}`;
   if (currentKey !== lastGameStatus) {
     setLastGameStatus(currentKey);
-    setPollingEnabled(!myTurn && !completed);
+    setPollingEnabled(!myTurn && completed === null);
   }
 
   const selfPlayer = started?.players.find(

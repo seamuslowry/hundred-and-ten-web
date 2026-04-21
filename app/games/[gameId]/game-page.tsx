@@ -6,7 +6,7 @@ import { ScoreBoard } from "@/components/game/score-board";
 import { useGameState } from "@/lib/hooks/use-game-state";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 function GameContent() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -25,14 +25,16 @@ function GameContent() {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  async function handleRefresh() {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
       await refetch();
+    } catch {
+      // error display deferred; isRefreshing resets via finally
     } finally {
       setIsRefreshing(false);
     }
-  }
+  }, [refetch]);
 
   if (loading) {
     return (
