@@ -168,4 +168,70 @@ describe("usePolling", () => {
     expect(result.current.data).toEqual({ id: 2 });
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
+
+  it("changing interval mid-lifecycle restarts the loop at the new interval", async () => {
+    const fetcher = vi.fn().mockResolvedValue({ id: 1 });
+
+    const { rerender } = renderHook(
+      ({ interval }: { interval: number }) => usePolling({ fetcher, interval }),
+      { initialProps: { interval: 3000 } },
+    );
+
+    // Wait for initial fetch
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    // Switch to 30s interval — effect re-runs, triggers an immediate fetch
+    rerender({ interval: 30000 });
+
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+
+    // Advance 3s — old interval would have fired again, new one should not
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+
+    // Advance to 30s from last fetch — new interval should fire now
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(27000);
+    });
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  it("changing enabled from false to true triggers an immediate fetch then the loop", async () => {
+    const fetcher = vi.fn().mockResolvedValue({ id: 1 });
+
+    const { rerender } = renderHook(
+      ({ enabled }: { enabled: boolean }) =>
+        usePolling({ fetcher, interval: 3000, enabled }),
+      { initialProps: { enabled: false } },
+    );
+
+    // Should not have fetched while disabled
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(fetcher).not.toHaveBeenCalled();
+
+    // Enable — should fire immediately
+    rerender({ enabled: true });
+
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    // Then fire again at the next interval
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+  });
 });

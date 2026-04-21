@@ -1,3 +1,5 @@
+"use client";
+
 import type { GameStatus, SelectableSuit } from "@/lib/api/types";
 import { SUIT_SYMBOL } from "./card-labels";
 
@@ -5,6 +7,8 @@ interface GameStatusBarProps {
   phase: GameStatus;
   myTurn: boolean;
   isStale: boolean;
+  onRefresh?: () => Promise<void>;
+  isRefreshing?: boolean;
   activePlayerId?: string | null;
   bidAmount?: number | null;
   bidderPlayerId?: string | null;
@@ -36,6 +40,8 @@ export function GameStatusBar({
   phase,
   myTurn,
   isStale,
+  onRefresh = async () => {},
+  isRefreshing = false,
   activePlayerId,
   bidAmount,
   bidderPlayerId,
@@ -57,19 +63,26 @@ export function GameStatusBar({
         </div>
 
         <div className="flex items-center gap-3">
-          {phase !== "WON" && (
-            <span
-              className={`rounded-full px-3 py-1 text-sm font-medium ${
-                myTurn
-                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                  : "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-              }`}
-            >
-              {myTurn
-                ? "Your turn"
-                : `Waiting for ${activePlayerId?.slice(0, 8) ?? "..."}`}
-            </span>
-          )}
+          {phase !== "WON" &&
+            (myTurn ? (
+              <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                Your turn
+              </span>
+            ) : (
+              <button
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className={`min-h-[44px] rounded-full px-3 text-sm font-medium ${
+                  isRefreshing
+                    ? "cursor-not-allowed bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-500"
+                    : "cursor-pointer bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                }`}
+              >
+                {isRefreshing
+                  ? `Waiting for ${activePlayerId?.slice(0, 8) ?? "..."}...`
+                  : `Waiting for ${activePlayerId?.slice(0, 8) ?? "..."} ↻`}
+              </button>
+            ))}
 
           {isStale && (
             <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
