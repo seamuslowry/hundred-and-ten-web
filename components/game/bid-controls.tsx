@@ -4,13 +4,28 @@ import type { BidValue } from "@/lib/api/types";
 
 interface BidControlsProps {
   currentBid: number | null;
+  canMatchCurrentBid?: boolean;
   disabled?: boolean;
   onBid: (amount: BidValue) => void;
 }
 
 const BID_VALUES: BidValue[] = [15, 20, 25, 30, 60];
 
-export function BidControls({ currentBid, disabled, onBid }: BidControlsProps) {
+function isBidValueDisabled(
+  value: BidValue,
+  currentBid: number | null,
+  canMatchCurrentBid: boolean,
+): boolean {
+  if (currentBid === null) return false;
+  return canMatchCurrentBid ? value < currentBid : value <= currentBid;
+}
+
+export function BidControls({
+  currentBid,
+  canMatchCurrentBid = false,
+  disabled,
+  onBid,
+}: BidControlsProps) {
   return (
     <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
       <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -22,7 +37,7 @@ export function BidControls({ currentBid, disabled, onBid }: BidControlsProps) {
             key={value}
             type="button"
             onClick={() => onBid(value)}
-            disabled={disabled || (currentBid !== null && value <= currentBid)}
+            disabled={disabled || isBidValueDisabled(value, currentBid, canMatchCurrentBid)}
             className="min-h-[44px] min-w-[44px] rounded-lg bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
           >
             {value}
