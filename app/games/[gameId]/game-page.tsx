@@ -6,6 +6,7 @@ import { ScoreBoard } from "@/components/game/score-board";
 import { useGameState } from "@/lib/hooks/use-game-state";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useState } from "react";
 
 function GameContent() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -20,7 +21,18 @@ function GameContent() {
     playerId,
     phase,
     refetch,
-  } = useGameState({ gameId });
+  } = useGameState({ gameId, interval: 30000 });
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -68,6 +80,8 @@ function GameContent() {
           isStale={isStale}
           playerId={playerId}
           onActionComplete={refetch}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
         />
         <aside className="hidden lg:flex lg:flex-col lg:gap-4">
           <ScoreBoard scores={scores} currentPlayerId={playerId} />

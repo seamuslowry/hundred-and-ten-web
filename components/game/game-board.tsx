@@ -27,6 +27,8 @@ interface GameBoardProps {
   isStale: boolean;
   playerId: string;
   onActionComplete: () => Promise<void>;
+  onRefresh: () => Promise<void>;
+  isRefreshing: boolean;
 }
 
 export function GameBoard({
@@ -37,6 +39,8 @@ export function GameBoard({
   isStale,
   playerId,
   onActionComplete,
+  onRefresh,
+  isRefreshing,
 }: GameBoardProps) {
   const [actionInFlight, setActionInFlight] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -58,7 +62,13 @@ export function GameBoard({
   if (completed) {
     return (
       <div className="flex flex-col gap-4">
-        <GameStatusBar phase="WON" myTurn={false} isStale={isStale} />
+        <GameStatusBar
+          phase="WON"
+          myTurn={false}
+          isStale={isStale}
+          onRefresh={onRefresh}
+          isRefreshing={isRefreshing}
+        />
         <div className="rounded-lg bg-green-50 p-6 text-center dark:bg-green-900">
           <h2 className="text-xl font-bold dark:text-gray-100">Game Over</h2>
           <p className="mt-2 text-lg dark:text-gray-200">
@@ -91,6 +101,8 @@ export function GameBoard({
         dealerPlayerId={started.dealer_player_id}
         playerId={playerId}
         trump={started.trump}
+        onRefresh={onRefresh}
+        isRefreshing={isRefreshing}
       />
 
       <div className="lg:hidden">
