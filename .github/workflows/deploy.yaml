@@ -30,7 +30,7 @@ jobs:
 
       - name: Get SWA Token
         id: swa_token
-        uses: azure/CLI@v1
+        uses: azure/CLI@v3
         with:
           inlineScript: |
             TOKEN=$(az staticwebapp secrets list \
