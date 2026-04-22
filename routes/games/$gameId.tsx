@@ -1,15 +1,17 @@
-"use client";
-
+import { createFileRoute } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { GameBoard } from "@/components/game/game-board";
 import { ScoreBoard } from "@/components/game/score-board";
 import { useGameState } from "@/lib/hooks/use-game-state";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+import { useParams, Link } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 
+export const Route = createFileRoute("/games/$gameId")({
+  component: GamePage,
+});
+
 function GameContent() {
-  const { gameId } = useParams<{ gameId: string }>();
+  const { gameId } = useParams({ from: "/games/$gameId" });
   const {
     started,
     completed,
@@ -65,7 +67,7 @@ function GameContent() {
   return (
     <main className="mx-auto w-full max-w-2xl p-4 md:max-w-4xl lg:max-w-6xl">
       <Link
-        href="/lobbies"
+        to="/lobbies"
         className="mb-3 inline-flex min-h-[44px] items-center text-sm text-blue-600 hover:underline"
       >
         &larr; Back to lobbies

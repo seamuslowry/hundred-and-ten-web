@@ -1,10 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { GamePage } from "../game-page";
+import { GamePage } from "../$gameId";
 
-vi.mock("next/navigation", () => ({
-  useParams: vi.fn().mockReturnValue({ gameId: "game-abc" }),
-}));
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return {
+    ...actual,
+    useParams: vi.fn().mockReturnValue({ gameId: "game-abc" }),
+    Link: ({ children, ...props }: { children: React.ReactNode; to: string }) => (
+      <a href={props.to}>{children}</a>
+    ),
+  };
+});
 
 vi.mock("@/components/auth/require-auth", () => ({
   RequireAuth: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -42,13 +49,15 @@ const baseState = {
   started: {
     status: "BIDDING" as const,
     id: "game-abc",
+    name: "Test Game",
     active_player_id: "other",
     players: [],
     scores: {},
     bid_amount: null,
     bidder_player_id: null,
-    dealer_player_id: null,
+    dealer_player_id: "player-1",
     trump: null,
+    tricks: [],
   },
   completed: null,
   loading: false,

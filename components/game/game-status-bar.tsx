@@ -1,4 +1,3 @@
-"use client";
 
 import type { GameStatus, SelectableSuit } from "@/lib/api/types";
 import { SUIT_SYMBOL } from "./card-labels";

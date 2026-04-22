@@ -1,4 +1,3 @@
-"use client";
 
 import type { SelectableSuit } from "@/lib/api/types";
 

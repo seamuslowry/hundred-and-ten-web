@@ -1,8 +1,8 @@
 import { getFirebaseAuth } from "@/lib/firebase";
 
 function getBaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (!url) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const url = import.meta.env.VITE_API_URL;
+  if (!url) throw new Error("VITE_API_URL is not configured");
   return url;
 }
 

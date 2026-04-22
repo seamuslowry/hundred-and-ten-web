@@ -1,21 +1,27 @@
-"use client";
-
-import { Suspense, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { SignInButton } from "@/components/auth/sign-in-button";
 
-function HomeContent() {
+export const Route = createFileRoute("/")({
+  component: Home,
+});
+
+function Home() {
   const { user, loading } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/" });
+  const returnTo =
+    typeof (search as Record<string, unknown>).returnTo === "string" &&
+    ((search as Record<string, string>).returnTo.startsWith("/")
+      ? (search as Record<string, string>).returnTo
+      : null);
 
   useEffect(() => {
     if (!loading && user) {
-      const returnTo = searchParams.get("returnTo") || "/lobbies";
-      router.push(returnTo);
+      navigate({ to: returnTo || "/lobbies" });
     }
-  }, [user, loading, router, searchParams]);
+  }, [user, loading, navigate, returnTo]);
 
   if (loading) {
     return (
@@ -37,19 +43,5 @@ function HomeContent() {
       </div>
       <SignInButton />
     </main>
-  );
-}
-
-export default function Home() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <p className="text-gray-500">Loading...</p>
-        </div>
-      }
-    >
-      <HomeContent />
-    </Suspense>
   );
 }

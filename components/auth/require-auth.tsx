@@ -1,19 +1,19 @@
-"use client";
 
 import { use, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "@tanstack/react-router";
 import { AuthContext } from "./auth-provider";
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = use(AuthContext);
-  const router = useRouter();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && !user) {
       const returnTo = window.location.pathname;
-      router.push(`/?returnTo=${encodeURIComponent(returnTo)}`);
+      const safeReturnTo = returnTo.startsWith("/") ? returnTo : "/lobbies";
+      navigate({ to: "/", search: { returnTo: safeReturnTo } });
     }
-  }, [user, loading, router]);
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
