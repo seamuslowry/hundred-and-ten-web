@@ -15,15 +15,6 @@ resource "azurerm_federated_identity_credential" "github_actions_main" {
   subject = "repo:seamuslowry/hundred-and-ten-web:ref:refs/heads/main"
 }
 
-resource "azurerm_federated_identity_credential" "github_actions_prs" {
-  name      = "github-actions-prs"
-  user_assigned_identity_id = azurerm_user_assigned_identity.github_deploy.id
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = "https://token.actions.githubusercontent.com"
-
-  subject = "repo:seamuslowry/hundred-and-ten-web:pull_request"
-}
-
 resource "azurerm_role_assignment" "github_deploy" {
   # Scoped to the site app. The deploy action needs Contributor on the app.
   scope                = azurerm_static_web_app.hundredandten_web.id
