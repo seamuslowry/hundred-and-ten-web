@@ -53,7 +53,7 @@ export function DiscardControls({
         <button
           type="button"
           onClick={() => onDiscard(selected)}
-          disabled={disabled || selected.length === 0}
+          disabled={disabled}
           className="min-h-[44px] rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {`Discard ${selected.length} card${selected.length !== 1 ? "s" : ""}`}

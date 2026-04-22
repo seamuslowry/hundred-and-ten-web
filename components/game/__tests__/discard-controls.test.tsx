@@ -103,9 +103,10 @@ describe("DiscardControls", () => {
       expect(
         screen.getByRole("button", { name: /discard 0 cards/i }),
       ).toBeInTheDocument();
+      // 0-card discard is allowed — button should NOT be disabled
       expect(
         screen.getByRole("button", { name: /discard 0 cards/i }),
-      ).toBeDisabled();
+      ).not.toBeDisabled();
     });
 
     it("does not pre-select Ace of Hearts when trump is HEARTS (double-trump overlap)", () => {
@@ -152,6 +153,20 @@ describe("DiscardControls", () => {
       fireEvent.click(screen.getByRole("button", { name: /discard/i }));
       expect(onDiscard).toHaveBeenCalledTimes(1);
       expect(onDiscard).toHaveBeenCalledWith([THREE_CLUBS, KING_SPADES]);
+    });
+
+    it("calls onDiscard with empty array when 0 cards are selected", () => {
+      const onDiscard = vi.fn();
+      render(
+        <DiscardControls
+          cards={[JOKER, ACE_HEARTS]}
+          trump="CLUBS"
+          onDiscard={onDiscard}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /discard 0 cards/i }));
+      expect(onDiscard).toHaveBeenCalledTimes(1);
+      expect(onDiscard).toHaveBeenCalledWith([]);
     });
 
     it("does not show a Cancel button", () => {
