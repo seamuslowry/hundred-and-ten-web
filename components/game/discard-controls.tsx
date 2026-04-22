@@ -1,37 +1,43 @@
-
 import { useState } from "react";
-import type { Card as CardType } from "@/lib/api/types";
+import type { Card as CardType, SelectableSuit } from "@/lib/api/types";
 import { Hand, cardEquals } from "./hand";
+
+// Client-side trump determination. Joker and Ace of Hearts are always trump.
+// Any card matching the elected trump suit is also trump.
+// Note: the backend is the authoritative source for trump rules; this logic
+// is cosmetic (drives auto-selection defaults) and will be removed once the
+// backend exposes per-card trump status.
+function isTrump(card: CardType, trump: SelectableSuit | null): boolean {
+  return (
+    card.suit === "JOKER" ||
+    (card.number === "ACE" && card.suit === "HEARTS") ||
+    (trump !== null && card.suit === trump)
+  );
+}
 
 interface DiscardControlsProps {
   cards: CardType[];
+  trump: SelectableSuit | null;
   disabled?: boolean;
   onDiscard: (cards: CardType[]) => void;
 }
 
 export function DiscardControls({
   cards,
+  trump,
   disabled,
   onDiscard,
 }: DiscardControlsProps) {
-  const [selected, setSelected] = useState<CardType[]>([]);
-  const [confirming, setConfirming] = useState(false);
+  const [selected, setSelected] = useState<CardType[]>(() =>
+    cards.filter((c) => !isTrump(c, trump)),
+  );
 
   function toggleCard(card: CardType) {
-    setSelected((prev) => {
-      const exists = prev.some((c) => cardEquals(c, card));
-      if (exists) return prev.filter((c) => !cardEquals(c, card));
-      return [...prev, card];
-    });
-    setConfirming(false);
-  }
-
-  function handleDiscard() {
-    if (!confirming) {
-      setConfirming(true);
-      return;
-    }
-    onDiscard(selected);
+    setSelected((prev) =>
+      prev.some((c) => cardEquals(c, card))
+        ? prev.filter((c) => !cardEquals(c, card))
+        : [...prev, card],
+    );
   }
 
   return (
@@ -46,27 +52,12 @@ export function DiscardControls({
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={handleDiscard}
-          disabled={disabled || selected.length === 0}
-          className={`min-h-[44px] rounded-lg px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 ${
-            confirming
-              ? "bg-red-600 hover:bg-red-700"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
+          onClick={() => onDiscard(selected)}
+          disabled={disabled}
+          className="min-h-[44px] rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {confirming
-            ? `Confirm discard ${selected.length} card${selected.length !== 1 ? "s" : ""}?`
-            : `Discard ${selected.length} card${selected.length !== 1 ? "s" : ""}`}
+          {`Discard ${selected.length} card${selected.length !== 1 ? "s" : ""}`}
         </button>
-        {confirming && (
-          <button
-            type="button"
-            onClick={() => setConfirming(false)}
-            className="min-h-[44px] rounded-lg bg-gray-200 px-4 py-2 font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-        )}
       </div>
     </div>
   );

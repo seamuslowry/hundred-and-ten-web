@@ -97,9 +97,18 @@ The `catch {}` is not optional boilerplate. Without it, the rejection propagates
 To verify `isRefreshing` resets on both success and failure, mount the real page component with mocked dependencies. Stub `GameBoard` as a minimal div that exposes `onRefresh` as a button — this drives the actual handler in the page without rendering the full game UI:
 
 ```typescript
-// app/games/[gameId]/__tests__/game-page.test.tsx
+// routes/games/__tests__/game-page.test.tsx
 vi.mock("@/lib/hooks/use-game-state", () => ({ useGameState: vi.fn() }));
-vi.mock("next/navigation", () => ({ useParams: vi.fn().mockReturnValue({ gameId: "game-abc" }) }));
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return {
+    ...actual,
+    useParams: vi.fn().mockReturnValue({ gameId: "game-abc" }),
+    Link: ({ children, ...props }: { children: React.ReactNode; to: string }) => (
+      <a href={props.to}>{children}</a>
+    ),
+  };
+});
 vi.mock("@/components/auth/require-auth", () => ({
   RequireAuth: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
@@ -190,7 +199,7 @@ it("forwards the configured interval to usePolling when waiting for opponent", a
 - `components/game/game-status-bar.tsx` — the child component whose optional interface `GameBoard` now matches
 - `lib/hooks/use-game-state.ts` — hooks that forward interval to `usePolling`
 - `lib/hooks/__tests__/use-game-state.test.ts` — spy-wrapping mock example for `usePolling`
-- `app/games/[gameId]/__tests__/game-page.test.tsx` — error-path test for `handleRefresh`
+- `routes/games/__tests__/game-page.test.tsx` — error-path test for `handleRefresh`
 
 ## Notes
 

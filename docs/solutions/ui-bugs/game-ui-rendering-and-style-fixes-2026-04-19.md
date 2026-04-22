@@ -20,7 +20,6 @@ tags:
   - game-ui
   - css-disabled
   - react
-  - next-js
 ---
 
 # Game UI rendering and style fixes (duplicate ScoreBoard, Pass button, card hover, bidder display)
@@ -53,7 +52,7 @@ A batch of UI polish bugs in the game view made the interface misleading or brok
 </div>
 ```
 
-The sidebar in `game-page.tsx` is already inside a `hidden lg:block` column, so the scoreboard now appears exactly once at every breakpoint.
+The sidebar in `routes/games/$gameId.tsx` is already inside a `hidden lg:block` column, so the scoreboard now appears exactly once at every breakpoint.
 
 ---
 
@@ -121,5 +120,5 @@ className={`... ${interactionClasses}`}
 
 ## Related Issues
 
-- `docs/solutions/best-practices/use-client-directive-ssr-migration-2026-04-19.md` — same session; touches `score-board.tsx` and `game-status-bar.tsx` but covers a different problem (`'use client'` directive cleanup after SSR migration).
+- ~~`docs/solutions/best-practices/use-client-directive-ssr-migration-2026-04-19.md`~~ — deleted; that doc described `'use client'` directive cleanup after an SSR migration that never happened — the actual migration target was Vite SPA where `'use client'` is meaningless.
 - This session also added dark mode (`dark:` Tailwind variants throughout), a `TrickHistory` collapsible component, `GameStatusBar` enhancements (standing bid, trump suit), responsive card sizing, and removal of hints/suggestions UI. Those are additive changes, not bugs.
