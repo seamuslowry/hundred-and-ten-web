@@ -33,11 +33,11 @@ export function DiscardControls({
   );
 
   function toggleCard(card: CardType) {
-    setSelected((prev) => {
-      const exists = prev.some((c) => cardEquals(c, card));
-      if (exists) return prev.filter((c) => !cardEquals(c, card));
-      return [...prev, card];
-    });
+    setSelected((prev) =>
+      prev.some((c) => cardEquals(c, card))
+        ? prev.filter((c) => !cardEquals(c, card))
+        : [...prev, card],
+    );
   }
 
   return (
