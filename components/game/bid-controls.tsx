@@ -1,4 +1,3 @@
-"use client";
 
 import type { BidValue } from "@/lib/api/types";
 

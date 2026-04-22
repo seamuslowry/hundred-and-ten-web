@@ -1,5 +1,5 @@
 import type { Lobby } from "@/lib/api/types";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 
 interface LobbyCardProps {
   lobby: Lobby;
@@ -11,7 +11,8 @@ export function LobbyCard({ lobby, isInvite }: LobbyCardProps) {
 
   return (
     <Link
-      href={`/lobbies/${lobby.id}`}
+      to="/lobbies/$lobbyId"
+      params={{ lobbyId: lobby.id }}
       className="block rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
       style={{ minHeight: 44 }}
     >

@@ -11,23 +11,21 @@ import { getFirebaseAuth } from "@/lib/firebase";
 const mockGetFirebaseAuth = vi.mocked(getFirebaseAuth);
 
 describe("apiFetch", () => {
-  const originalEnv = process.env.NEXT_PUBLIC_API_URL;
-
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    vi.stubEnv("VITE_API_URL", "https://api.example.com");
     vi.stubGlobal("fetch", vi.fn());
     mockGetFirebaseAuth.mockReturnValue(null);
   });
 
   afterEach(() => {
-    process.env.NEXT_PUBLIC_API_URL = originalEnv;
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
   });
 
-  it("throws if NEXT_PUBLIC_API_URL is not set", async () => {
-    delete process.env.NEXT_PUBLIC_API_URL;
+  it("throws if VITE_API_URL is not set", async () => {
+    vi.stubEnv("VITE_API_URL", "");
     await expect(apiFetch("/test")).rejects.toThrow(
-      "NEXT_PUBLIC_API_URL is not configured",
+      "VITE_API_URL is not configured",
     );
   });
 

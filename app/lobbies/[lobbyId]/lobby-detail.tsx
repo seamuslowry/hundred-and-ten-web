@@ -1,12 +1,10 @@
-"use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useNavigate, Link } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { MemberList } from "@/components/lobby/member-list";
 import { PlayerSearch } from "@/components/lobby/player-search";
 import { useAuth } from "@/lib/hooks/use-auth";
-import Link from "next/link";
 import {
   getLobby,
   getLobbyPlayers,
@@ -16,9 +14,9 @@ import {
 import type { Lobby, Player } from "@/lib/api/types";
 
 function LobbyDetailContent() {
-  const { lobbyId } = useParams<{ lobbyId: string }>();
+  const { lobbyId } = useParams({ from: "/lobbies/$lobbyId" });
   const { user } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [playerDetails, setPlayerDetails] = useState<Map<string, Player>>(
     new Map(),
@@ -91,7 +89,7 @@ function LobbyDetailContent() {
     setActionLoading(true);
     try {
       await startGame(user.uid, lobbyId);
-      router.push(`/games/${lobbyId}`);
+      navigate({ to: "/games/$gameId", params: { gameId: lobbyId } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to start game");
     } finally {
@@ -118,7 +116,7 @@ function LobbyDetailContent() {
   return (
     <main className="mx-auto max-w-md p-4">
       <Link
-        href="/lobbies"
+        to="/lobbies"
         className="mb-3 inline-flex min-h-[44px] items-center text-sm text-blue-600 hover:underline"
       >
         &larr; Back to lobbies

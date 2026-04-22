@@ -1,14 +1,16 @@
-"use client";
-
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { createLobby } from "@/lib/api/lobbies";
 
+export const Route = createFileRoute("/lobbies/new")({
+  component: NewLobbyPage,
+});
+
 function NewLobbyContent() {
   const { user } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [accessibility, setAccessibility] = useState<"PUBLIC" | "PRIVATE">(
     "PUBLIC",
@@ -24,7 +26,7 @@ function NewLobbyContent() {
     setError(null);
     try {
       const lobby = await createLobby(user.uid, name.trim(), accessibility);
-      router.push(`/lobbies/${lobby.id}`);
+      navigate({ to: "/lobbies/$lobbyId", params: { lobbyId: lobby.id } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create lobby");
     } finally {
@@ -104,7 +106,7 @@ function NewLobbyContent() {
   );
 }
 
-export default function NewLobbyPage() {
+function NewLobbyPage() {
   return (
     <RequireAuth>
       <NewLobbyContent />

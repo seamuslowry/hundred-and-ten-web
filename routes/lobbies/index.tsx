@@ -1,12 +1,15 @@
-"use client";
-
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { LobbyCard } from "@/components/lobby/lobby-card";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { searchLobbies } from "@/lib/api/lobbies";
 import type { Lobby } from "@/lib/api/types";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
+
+export const Route = createFileRoute("/lobbies/")({
+  component: LobbiesPage,
+});
 
 function LobbiesContent() {
   const { user } = useAuth();
@@ -48,7 +51,7 @@ function LobbiesContent() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold dark:text-gray-100">Lobbies</h1>
         <Link
-          href="/lobbies/new"
+          to="/lobbies/new"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           style={{
             minHeight: 44,
@@ -86,7 +89,7 @@ function LobbiesContent() {
   );
 }
 
-export default function LobbiesPage() {
+function LobbiesPage() {
   return (
     <RequireAuth>
       <LobbiesContent />

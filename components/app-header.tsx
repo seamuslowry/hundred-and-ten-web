@@ -1,6 +1,5 @@
-"use client";
 
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/hooks/use-auth";
 
 export function AppHeader() {
@@ -11,7 +10,7 @@ export function AppHeader() {
   return (
     <header className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
       <nav className="flex items-center justify-between">
-        <Link href="/lobbies" className="text-lg font-bold dark:text-gray-100">
+        <Link to="/lobbies" className="text-lg font-bold dark:text-gray-100">
           Hundred and Ten
         </Link>
         <div className="flex items-center gap-3">

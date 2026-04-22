@@ -1,4 +1,3 @@
-"use client";
 
 import { useState } from "react";
 import type { Card as CardType } from "@/lib/api/types";
