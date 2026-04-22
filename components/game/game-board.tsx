@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import type {
   StartedGame,
@@ -146,6 +145,7 @@ export function GameBoard({
       {phase === "DISCARD" && myTurn && (
         <DiscardControls
           cards={hand}
+          trump={started.trump}
           disabled={actionInFlight}
           onDiscard={(cards: CardType[]) =>
             doAction({ type: "DISCARD", cards })
