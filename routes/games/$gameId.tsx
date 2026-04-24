@@ -23,7 +23,7 @@ function GameContent() {
     playerId,
     phase,
     refetch,
-  } = useGameState({ gameId, interval: 30000 });
+  } = useGameState({ gameId, interval: 3000 });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
