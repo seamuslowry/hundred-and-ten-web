@@ -6,6 +6,7 @@ import type {
   Suggestion,
   Player,
   ApiEvent,
+  SpikeGame,
 } from "./types";
 
 export function getGame(
@@ -38,4 +39,11 @@ export function getGamePlayers(
   gameId: string,
 ): Promise<Player[]> {
   return apiFetch(`/players/${playerId}/games/${gameId}/players`);
+}
+
+export function getSpikeGame(
+  playerId: string,
+  gameId: string,
+): Promise<SpikeGame> {
+  return apiFetch(`/players/${playerId}/games/${gameId}/spike`);
 }

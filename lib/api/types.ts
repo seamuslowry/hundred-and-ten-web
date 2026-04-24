@@ -119,3 +119,58 @@ export interface SearchRequest {
 export interface ApiEvent {
   [key: string]: unknown;
 }
+
+// Spike endpoint types — round-based game response
+
+export interface SpikeBid {
+  player_id: string;
+  amount: number;
+}
+
+export interface SpikeGame {
+  id: string;
+  name: string;
+  status: string;
+  winner: PlayerInGame | null;
+  players: PlayerInGame[];
+  scores: Record<string, number>;
+  rounds: SpikeRound[];
+}
+
+export type SpikeRound =
+  | SpikeCompletedRound
+  | SpikeCompletedNoBiddersRound
+  | SpikeActiveRound;
+
+export interface SpikeCompletedRound {
+  status: "COMPLETED";
+  dealer_player_id: string;
+  bidder_player_id: string;
+  bid_amount: number;
+  trump: SelectableSuit;
+  bid_history: SpikeBid[];
+  hands: Record<string, Card[]>;
+  discards: Record<string, Card[]>;
+  tricks: Trick[];
+  scores: Record<string, number>;
+}
+
+export interface SpikeCompletedNoBiddersRound {
+  status: "COMPLETED_NO_BIDDERS";
+  dealer_player_id: string;
+  initial_hands: Record<string, Card[]>;
+}
+
+export interface SpikeActiveRound {
+  status: "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS";
+  dealer_player_id: string;
+  bid_history: SpikeBid[];
+  hands: Record<string, Card[] | number>;
+  discards: Record<string, Card[] | number>;
+  bidder_player_id: string | null;
+  bid_amount: number | null;
+  trump: SelectableSuit | null;
+  tricks: Trick[];
+  active_player_id: string;
+  queued_actions: unknown[];
+}
