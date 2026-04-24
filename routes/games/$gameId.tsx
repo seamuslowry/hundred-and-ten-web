@@ -2,10 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { GameBoard } from "@/components/game/game-board";
 import { ScoreBoard } from "@/components/game/score-board";
+import { RoundHistory } from "@/components/game/round-history";
 import { useGameState } from "@/lib/hooks/use-game-state";
 import { getGamePlayers } from "@/lib/api/games";
 import { useParams, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
+import type { SpikeCompletedRound, SpikeCompletedNoBiddersRound } from "@/lib/api/types";
 
 export const Route = createFileRoute("/games/$gameId")({
   component: GamePage,
@@ -16,6 +18,7 @@ function GameContent() {
   const {
     game,
     activeRound,
+    completedRounds,
     isCompleted,
     winner,
     loading,
@@ -108,6 +111,10 @@ function GameContent() {
           onActionComplete={refetch}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
+        />
+        <RoundHistory
+          completedRounds={completedRounds as (SpikeCompletedRound | SpikeCompletedNoBiddersRound)[]}
+          playerNames={playerNames}
         />
       </div>
     </main>
