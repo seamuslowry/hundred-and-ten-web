@@ -26,6 +26,17 @@ vi.mock("@/components/game/game-board", () => ({
     onRefresh,
     isRefreshing,
   }: {
+    gameId: string;
+    activeRound: unknown;
+    isCompleted: boolean;
+    winner: unknown;
+    hand: unknown[];
+    scores: Record<string, number>;
+    playerNames: Map<string, string>;
+    myTurn: boolean;
+    isStale: boolean;
+    playerId: string;
+    onActionComplete: () => Promise<void>;
     onRefresh?: () => Promise<void>;
     isRefreshing?: boolean;
   }) => (
@@ -34,6 +45,10 @@ vi.mock("@/components/game/game-board", () => ({
       <button onClick={onRefresh}>Refresh</button>
     </div>
   ),
+}));
+
+vi.mock("@/lib/api/games", () => ({
+  getGamePlayers: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("@/components/game/score-board", () => ({
@@ -45,21 +60,31 @@ import { useGameState } from "@/lib/hooks/use-game-state";
 const mockUseGameState = vi.mocked(useGameState);
 
 const baseState = {
-  game: null,
-  started: {
-    status: "BIDDING" as const,
+  game: {
     id: "game-abc",
     name: "Test Game",
-    active_player_id: "other",
+    status: "BIDDING",
+    winner: null,
     players: [],
     scores: {},
-    bid_amount: null,
-    bidder_player_id: null,
+    rounds: [],
+  },
+  activeRound: {
+    status: "BIDDING" as const,
     dealer_player_id: "player-1",
+    bid_history: [],
+    hands: {},
+    discards: {},
+    bidder_player_id: null,
+    bid_amount: null,
     trump: null,
     tricks: [],
+    active_player_id: "other",
+    queued_actions: [],
   },
-  completed: null,
+  completedRounds: [],
+  isCompleted: false,
+  winner: null,
   loading: false,
   error: null,
   isStale: false,
