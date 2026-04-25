@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CompletedRoundView } from "../completed-round-view";
 import type {
-  SpikeCompletedRound,
+  SpikeCompletedWithBidderRound,
   SpikeCompletedNoBiddersRound,
 } from "@/lib/api/types";
 
@@ -14,23 +14,25 @@ const playerNames = new Map([
   ["player-3", "Carol"],
 ]);
 
-const completedRound: SpikeCompletedRound = {
+const completedRound: SpikeCompletedWithBidderRound = {
   status: "COMPLETED",
   dealer_player_id: "player-1",
-  bidder_player_id: "player-2",
-  bid_amount: 20,
   trump: "HEARTS",
   bid_history: [
     { player_id: "player-1", amount: 0 },
     { player_id: "player-2", amount: 20 },
   ],
-  hands: {
+  bid: { player_id: "player-2", amount: 20 },
+  initial_hands: {
     "player-1": [{ number: "ACE", suit: "HEARTS" }],
     "player-2": [{ number: "KING", suit: "SPADES" }],
   },
   discards: {
-    "player-1": [{ number: "TWO", suit: "CLUBS" }],
-    "player-2": [],
+    "player-1": {
+      discarded: [{ number: "TWO", suit: "CLUBS" }],
+      received: [{ number: "SEVEN", suit: "HEARTS" }],
+    },
+    "player-2": { discarded: [], received: [] },
   },
   tricks: [
     {
@@ -253,7 +255,7 @@ describe("CompletedRoundView — expanded COMPLETED round", () => {
     expect(screen.getByText("Twenty")).toBeInTheDocument();
   });
 
-  it("shows player hands section", () => {
+  it("shows player initial hands section", () => {
     render(
       <CompletedRoundView
         round={completedRound}
@@ -263,12 +265,12 @@ describe("CompletedRoundView — expanded COMPLETED round", () => {
         playerNames={playerNames}
       />,
     );
-    expect(screen.getByText("Hands")).toBeInTheDocument();
+    expect(screen.getByText("Initial Hands")).toBeInTheDocument();
     // Card label for ACE of HEARTS appears in both the hands section and the tricks section
     expect(screen.getAllByText("A♥").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("shows player discards section", () => {
+  it("shows player discards section with discarded and received cards", () => {
     render(
       <CompletedRoundView
         round={completedRound}
@@ -279,8 +281,11 @@ describe("CompletedRoundView — expanded COMPLETED round", () => {
       />,
     );
     expect(screen.getByText("Discards")).toBeInTheDocument();
-    // Card label for TWO of CLUBS
+    // Card label for TWO of CLUBS (discarded)
     expect(screen.getByText("2♣")).toBeInTheDocument();
+    // Received label and card
+    expect(screen.getByText("Received")).toBeInTheDocument();
+    expect(screen.getByText("7♥")).toBeInTheDocument();
   });
 
   it("shows tricks with winning play and bleeding badge", () => {

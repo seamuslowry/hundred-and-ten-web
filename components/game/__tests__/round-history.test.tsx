@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RoundHistory } from "../round-history";
 import type {
-  SpikeCompletedRound,
+  SpikeCompletedWithBidderRound,
   SpikeCompletedNoBiddersRound,
 } from "@/lib/api/types";
 
@@ -17,15 +17,14 @@ function makeCompletedRound(
   dealerId: string,
   bidderId: string,
   bidAmount: number,
-): SpikeCompletedRound {
+): SpikeCompletedWithBidderRound {
   return {
     status: "COMPLETED",
     dealer_player_id: dealerId,
-    bidder_player_id: bidderId,
-    bid_amount: bidAmount,
     trump: "SPADES",
     bid_history: [{ player_id: bidderId, amount: bidAmount }],
-    hands: {},
+    bid: { player_id: bidderId, amount: bidAmount },
+    initial_hands: {},
     discards: {},
     tricks: [],
     scores: { [bidderId]: bidAmount },

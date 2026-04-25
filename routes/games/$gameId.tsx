@@ -7,10 +7,6 @@ import { useGameState } from "@/lib/hooks/use-game-state";
 import { getGamePlayers } from "@/lib/api/games";
 import { useParams, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import type {
-  SpikeCompletedRound,
-  SpikeCompletedNoBiddersRound,
-} from "@/lib/api/types";
 
 export const Route = createFileRoute("/games/$gameId")({
   component: GamePage,
@@ -118,12 +114,7 @@ function GameContent() {
           isRefreshing={isRefreshing}
         />
         <RoundHistory
-          completedRounds={
-            completedRounds as (
-              | SpikeCompletedRound
-              | SpikeCompletedNoBiddersRound
-            )[]
-          }
+          completedRounds={completedRounds}
           playerNames={playerNames}
         />
       </div>

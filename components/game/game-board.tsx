@@ -97,8 +97,7 @@ export function GameBoard({
       <RoundHeader
         phase={phase}
         dealerPlayerId={activeRound.dealer_player_id}
-        bidderPlayerId={activeRound.bidder_player_id}
-        bidAmount={activeRound.bid_amount}
+        bid={activeRound.bid}
         trump={activeRound.trump}
         activePlayerId={activeRound.active_player_id}
         playerId={playerId}
@@ -116,7 +115,7 @@ export function GameBoard({
 
       {phase === "BIDDING" && myTurn && (
         <BidControls
-          currentBid={activeRound.bid_amount}
+          currentBid={activeRound.bid?.amount ?? null}
           canMatchCurrentBid={activeRound.dealer_player_id === playerId}
           disabled={actionInFlight}
           onBid={(amount: BidValue) => doAction({ type: "BID", amount })}

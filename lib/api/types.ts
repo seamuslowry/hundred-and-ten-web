@@ -85,30 +85,39 @@ export interface SpikeBid {
   amount: number;
 }
 
+export interface SpikeDiscard {
+  discarded: Card[];
+  received: Card[];
+}
+
 export interface SpikeGame {
   id: string;
   name: string;
-  status: string;
-  winner: PlayerInGame | null;
   players: PlayerInGame[];
   scores: Record<string, number>;
-  rounds: SpikeRound[];
+  active: SpikeActive;
+  completed_rounds: SpikeCompletedRound[];
 }
 
-export type SpikeRound =
-  | SpikeCompletedRound
-  | SpikeCompletedNoBiddersRound
-  | SpikeActiveRound;
+export type SpikeActive = SpikeActiveRound | SpikeWonInformation;
 
-export interface SpikeCompletedRound {
+export interface SpikeWonInformation {
+  status: "WON";
+  winner_player_id: string;
+}
+
+export type SpikeCompletedRound =
+  | SpikeCompletedWithBidderRound
+  | SpikeCompletedNoBiddersRound;
+
+export interface SpikeCompletedWithBidderRound {
   status: "COMPLETED";
   dealer_player_id: string;
-  bidder_player_id: string;
-  bid_amount: number;
   trump: SelectableSuit;
   bid_history: SpikeBid[];
-  hands: Record<string, Card[]>;
-  discards: Record<string, Card[]>;
+  bid: SpikeBid | null;
+  initial_hands: Record<string, Card[]>;
+  discards: Record<string, SpikeDiscard>;
   tricks: Trick[];
   scores: Record<string, number>;
 }
@@ -123,11 +132,10 @@ export interface SpikeActiveRound {
   status: "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS";
   dealer_player_id: string;
   bid_history: SpikeBid[];
+  bid: SpikeBid | null;
   hands: Record<string, Card[] | number>;
-  discards: Record<string, Card[] | number>;
-  bidder_player_id: string | null;
-  bid_amount: number | null;
   trump: SelectableSuit | null;
+  discards: Record<string, SpikeDiscard | number>;
   tricks: Trick[];
   active_player_id: string;
   queued_actions: unknown[];

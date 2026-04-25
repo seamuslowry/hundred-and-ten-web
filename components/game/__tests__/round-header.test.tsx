@@ -15,8 +15,7 @@ const playerNames = new Map([
 const defaultProps = {
   phase: "BIDDING",
   dealerPlayerId: "player-1",
-  bidderPlayerId: null,
-  bidAmount: null,
+  bid: null,
   trump: null,
   activePlayerId: "player-2",
   playerId: "player-1",
@@ -45,13 +44,12 @@ describe("RoundHeader", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("shows bidder and bid amount when both are non-null", () => {
+  it("shows bidder and bid amount when bid is non-null", () => {
     render(
       <RoundHeader
         {...defaultProps}
         phase="DISCARD"
-        bidderPlayerId="player-2"
-        bidAmount={20}
+        bid={{ player_id: "player-2", amount: 20 }}
       />,
     );
     expect(screen.getByText(/Bob.*@.*Twenty/)).toBeInTheDocument();
@@ -62,10 +60,8 @@ describe("RoundHeader", () => {
     expect(screen.getByText("♥")).toBeInTheDocument();
   });
 
-  it("shows '(pending)' when bidderPlayerId is null and phase is BIDDING", () => {
-    render(
-      <RoundHeader {...defaultProps} phase="BIDDING" bidderPlayerId={null} />,
-    );
+  it("shows '(pending)' when bid is null and phase is BIDDING", () => {
+    render(<RoundHeader {...defaultProps} phase="BIDDING" bid={null} />);
     expect(screen.getByText("(pending)")).toBeInTheDocument();
   });
 
@@ -141,26 +137,18 @@ describe("RoundHeader", () => {
     expect(screen.getByText("♠")).toBeInTheDocument();
   });
 
-  it("does not show bidder section when not in BIDDING phase and bidderPlayerId is null", () => {
-    render(
-      <RoundHeader
-        {...defaultProps}
-        phase="TRICKS"
-        bidderPlayerId={null}
-        bidAmount={null}
-      />,
-    );
+  it("does not show bidder section when not in BIDDING phase and bid is null", () => {
+    render(<RoundHeader {...defaultProps} phase="TRICKS" bid={null} />);
     expect(screen.queryByText("(pending)")).toBeNull();
     expect(screen.queryByText(/Bidder/)).toBeNull();
   });
 
-  it("shows bidder section when bidderPlayerId is non-null regardless of phase", () => {
+  it("shows bidder section when bid is non-null regardless of phase", () => {
     render(
       <RoundHeader
         {...defaultProps}
         phase="TRICKS"
-        bidderPlayerId="player-3"
-        bidAmount={25}
+        bid={{ player_id: "player-3", amount: 25 }}
       />,
     );
     expect(screen.getByText(/Carol.*@.*Twenty Five/)).toBeInTheDocument();

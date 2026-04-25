@@ -1,8 +1,8 @@
-import type { Card as CardType } from "@/lib/api/types";
+import type { SpikeDiscard } from "@/lib/api/types";
 import { Card } from "./card";
 
 interface DiscardAreaProps {
-  discards: Record<string, CardType[] | number>;
+  discards: Record<string, SpikeDiscard | number>;
   playerId: string;
   playerNames: Map<string, string>;
 }
@@ -26,22 +26,37 @@ export function DiscardArea({
       </p>
       <div className="flex flex-col gap-2">
         {entries.map(([pid, value]) => {
-          if (pid === playerId && Array.isArray(value)) {
+          if (pid === playerId && typeof value === "object") {
             return (
-              <div key={pid}>
-                <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
-                  Your discards
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {value.map((card, i) => (
-                    <Card key={i} card={card} disabled />
-                  ))}
+              <div key={pid} className="flex flex-col gap-2">
+                <div>
+                  <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                    Your discards
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {value.discarded.map((card, i) => (
+                      <Card key={i} card={card} disabled />
+                    ))}
+                  </div>
                 </div>
+                {value.received.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                      Received
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {value.received.map((card, i) => (
+                        <Card key={i} card={card} disabled />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           }
 
-          const count = Array.isArray(value) ? value.length : value;
+          const count =
+            typeof value === "number" ? value : value.discarded.length;
           return (
             <p key={pid} className="text-sm text-gray-700 dark:text-gray-200">
               <span className="font-medium">

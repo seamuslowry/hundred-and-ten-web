@@ -7,6 +7,7 @@ vi.mock("@/lib/firebase", () => ({ auth: {} }));
 
 const ACE_HEARTS: Card = { number: "ACE", suit: "HEARTS" };
 const THREE_CLUBS: Card = { number: "THREE", suit: "CLUBS" };
+const FIVE_SPADES: Card = { number: "FIVE", suit: "SPADES" };
 
 const playerNames = new Map([
   ["player-1", "Alice"],
@@ -14,10 +15,15 @@ const playerNames = new Map([
 ]);
 
 describe("DiscardArea", () => {
-  it("shows current player's discarded cards when discards[playerId] is Card[]", () => {
+  it("shows current player's discarded cards when discards[playerId] is SpikeDiscard", () => {
     render(
       <DiscardArea
-        discards={{ "player-1": [ACE_HEARTS, THREE_CLUBS] }}
+        discards={{
+          "player-1": {
+            discarded: [ACE_HEARTS, THREE_CLUBS],
+            received: [],
+          },
+        }}
         playerId="player-1"
         playerNames={playerNames}
       />,
@@ -29,6 +35,41 @@ describe("DiscardArea", () => {
     expect(
       screen.getByRole("button", { name: /three of clubs/i }),
     ).toBeInTheDocument();
+  });
+
+  it("shows received cards for the current player", () => {
+    render(
+      <DiscardArea
+        discards={{
+          "player-1": {
+            discarded: [THREE_CLUBS],
+            received: [FIVE_SPADES],
+          },
+        }}
+        playerId="player-1"
+        playerNames={playerNames}
+      />,
+    );
+    expect(screen.getByText("Received")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /five of spades/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show received section when received is empty", () => {
+    render(
+      <DiscardArea
+        discards={{
+          "player-1": {
+            discarded: [THREE_CLUBS],
+            received: [],
+          },
+        }}
+        playerId="player-1"
+        playerNames={playerNames}
+      />,
+    );
+    expect(screen.queryByText("Received")).toBeNull();
   });
 
   it("shows other players' discard counts", () => {
@@ -66,10 +107,12 @@ describe("DiscardArea", () => {
     expect(screen.getByText(/: 0 cards/)).toBeInTheDocument();
   });
 
-  it("shows other player's card array as a count", () => {
+  it("shows other player's SpikeDiscard as a count", () => {
     render(
       <DiscardArea
-        discards={{ "player-2": [ACE_HEARTS] }}
+        discards={{
+          "player-2": { discarded: [ACE_HEARTS], received: [] },
+        }}
         playerId="player-1"
         playerNames={playerNames}
       />,
@@ -81,7 +124,9 @@ describe("DiscardArea", () => {
   it("card components for current player are disabled (read-only)", () => {
     render(
       <DiscardArea
-        discards={{ "player-1": [ACE_HEARTS] }}
+        discards={{
+          "player-1": { discarded: [ACE_HEARTS], received: [] },
+        }}
         playerId="player-1"
         playerNames={playerNames}
       />,

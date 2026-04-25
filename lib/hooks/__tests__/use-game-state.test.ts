@@ -39,10 +39,9 @@ const mockActiveRound = {
   status: "BIDDING" as const,
   dealer_player_id: OTHER_PLAYER_ID,
   bid_history: [],
+  bid: null,
   hands: { [PLAYER_ID]: MY_HAND, [OTHER_PLAYER_ID]: 5 },
   discards: {},
-  bidder_player_id: null,
-  bid_amount: null,
   trump: null,
   tricks: [],
   active_player_id: OTHER_PLAYER_ID,
@@ -65,11 +64,10 @@ const mockTricksRound = {
 const mockCompletedRound = {
   status: "COMPLETED" as const,
   dealer_player_id: OTHER_PLAYER_ID,
-  bidder_player_id: OTHER_PLAYER_ID,
-  bid_amount: 20,
   trump: "SPADES" as const,
   bid_history: [],
-  hands: { [PLAYER_ID]: MY_HAND, [OTHER_PLAYER_ID]: MY_HAND },
+  bid: { player_id: OTHER_PLAYER_ID, amount: 20 },
+  initial_hands: { [PLAYER_ID]: MY_HAND, [OTHER_PLAYER_ID]: MY_HAND },
   discards: {},
   tricks: [],
   scores: { [PLAYER_ID]: 0, [OTHER_PLAYER_ID]: 20 },
@@ -86,40 +84,46 @@ const mockNoBiddersRound = {
 const mockSpikeGame = {
   id: GAME_ID,
   name: "Test Game",
-  status: "BIDDING",
-  winner: null,
   players: [
     { id: PLAYER_ID, type: "human" as const },
     { id: OTHER_PLAYER_ID, type: "human" as const },
   ],
   scores: { [PLAYER_ID]: 0, [OTHER_PLAYER_ID]: 0 },
-  rounds: [mockActiveRound],
+  active: mockActiveRound,
+  completed_rounds: [],
 };
 
 // SpikeGame where it's the current player's turn
 const mockMyTurnGame = {
   ...mockSpikeGame,
-  rounds: [mockMyTurnRound],
+  active: mockMyTurnRound,
 };
 
 // SpikeGame that is completed (has a winner)
 const mockCompletedGame = {
   ...mockSpikeGame,
-  status: "WON",
-  winner: { id: OTHER_PLAYER_ID, type: "human" as const },
-  rounds: [mockCompletedRound],
+  active: {
+    status: "WON" as const,
+    winner_player_id: OTHER_PLAYER_ID,
+  },
+  completed_rounds: [mockCompletedRound],
 };
 
 // SpikeGame with two completed rounds and one active round
 const mockMultiRoundGame = {
   ...mockSpikeGame,
-  rounds: [mockCompletedRound, mockNoBiddersRound, mockActiveRound],
+  active: mockActiveRound,
+  completed_rounds: [mockCompletedRound, mockNoBiddersRound],
 };
 
-// SpikeGame with only completed rounds (no active round)
+// SpikeGame with only completed rounds (no active round — game won)
 const mockAllCompletedGame = {
   ...mockSpikeGame,
-  rounds: [mockCompletedRound, mockNoBiddersRound],
+  active: {
+    status: "WON" as const,
+    winner_player_id: OTHER_PLAYER_ID,
+  },
+  completed_rounds: [mockCompletedRound, mockNoBiddersRound],
 };
 
 describe("useGameState", () => {
@@ -166,7 +170,7 @@ describe("useGameState", () => {
   it("falls back to empty array when hands[playerId] is a number", async () => {
     const gameWithNumericHand = {
       ...mockSpikeGame,
-      rounds: [{ ...mockActiveRound, hands: { [PLAYER_ID]: 5 } }],
+      active: { ...mockActiveRound, hands: { [PLAYER_ID]: 5 } },
     };
     mockGetSpikeGame.mockResolvedValue(gameWithNumericHand as never);
 
@@ -182,7 +186,7 @@ describe("useGameState", () => {
   it("falls back to empty array when hands[playerId] is missing", async () => {
     const gameWithMissingHand = {
       ...mockSpikeGame,
-      rounds: [{ ...mockActiveRound, hands: {} }],
+      active: { ...mockActiveRound, hands: {} },
     };
     mockGetSpikeGame.mockResolvedValue(gameWithMissingHand as never);
 
@@ -210,7 +214,7 @@ describe("useGameState", () => {
   it("derives phase as TRICKS when activeRound is in TRICKS", async () => {
     mockGetSpikeGame.mockResolvedValue({
       ...mockSpikeGame,
-      rounds: [mockTricksRound],
+      active: mockTricksRound,
     } as never);
 
     const { result } = renderHook(() =>
@@ -272,7 +276,7 @@ describe("useGameState", () => {
     });
   });
 
-  it("derives isCompleted false when game.winner is null", async () => {
+  it("derives isCompleted false when active round is in-progress", async () => {
     const { result } = renderHook(() =>
       useGameState({ gameId: GAME_ID, interval: 30000 }),
     );
@@ -282,7 +286,7 @@ describe("useGameState", () => {
     });
   });
 
-  it("exposes the winner from game.winner", async () => {
+  it("exposes the winner from SpikeWonInformation", async () => {
     mockGetSpikeGame.mockResolvedValue(mockCompletedGame as never);
 
     const { result } = renderHook(() =>

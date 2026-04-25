@@ -1,12 +1,9 @@
 import { useState } from "react";
-import type {
-  SpikeCompletedRound,
-  SpikeCompletedNoBiddersRound,
-} from "@/lib/api/types";
+import type { SpikeCompletedRound } from "@/lib/api/types";
 import { CompletedRoundView } from "./completed-round-view";
 
 interface RoundHistoryProps {
-  completedRounds: (SpikeCompletedRound | SpikeCompletedNoBiddersRound)[];
+  completedRounds: SpikeCompletedRound[];
   playerNames: Map<string, string>;
 }
 

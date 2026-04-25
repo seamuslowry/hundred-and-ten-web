@@ -5,8 +5,10 @@ import { getSpikeGame } from "@/lib/api/games";
 import type {
   SpikeGame,
   SpikeActiveRound,
-  SpikeRound,
+  SpikeActive,
+  SpikeCompletedRound,
   Card,
+  PlayerInGame,
 } from "@/lib/api/types";
 
 interface UseGameStateOptions {
@@ -15,20 +17,8 @@ interface UseGameStateOptions {
   interval?: number;
 }
 
-const ACTIVE_STATUSES = new Set<string>([
-  "BIDDING",
-  "TRUMP_SELECTION",
-  "DISCARD",
-  "TRICKS",
-]);
-
-const COMPLETED_STATUSES = new Set<string>([
-  "COMPLETED",
-  "COMPLETED_NO_BIDDERS",
-]);
-
-function isActiveRound(round: SpikeRound): round is SpikeActiveRound {
-  return ACTIVE_STATUSES.has(round.status);
+function isActiveRound(active: SpikeActive): active is SpikeActiveRound {
+  return active.status !== "WON";
 }
 
 export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
@@ -58,29 +48,25 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
     enabled: !!playerId && pollingEnabled,
   });
 
-  // Derive active round: the first round whose status is an in-progress status
-  const activeRound: SpikeActiveRound | null = game
-    ? (game.rounds.find(isActiveRound) ?? null)
-    : null;
+  // Derive active round from game.active when it is an in-progress round
+  const activeRound: SpikeActiveRound | null =
+    game && isActiveRound(game.active) ? game.active : null;
 
-  // Derive completed rounds
-  const completedRounds: SpikeRound[] = game
-    ? game.rounds.filter((r) => COMPLETED_STATUSES.has(r.status))
-    : [];
+  // Derive completed rounds directly from game.completed_rounds
+  const completedRounds: SpikeCompletedRound[] = game?.completed_rounds ?? [];
 
   // Derive hand from activeRound.hands[playerId]; fall back to [] when missing
   // or when the value is a number (opponent hand size, not card array)
   const rawHand = activeRound?.hands[playerId];
   const hand: Card[] = Array.isArray(rawHand) ? rawHand : [];
 
-  // Derive turn / completion. A game is complete when:
-  // - winner is present (normal case), OR
-  // - game is loaded with rounds but none are active (guards winner: null in WON status)
+  // Derive turn / completion. A game is complete when active status is WON.
   const myTurn = activeRound?.active_player_id === playerId;
-  const isCompleted =
-    !!game?.winner ||
-    (!!game && game.rounds.length > 0 && activeRound === null);
-  const winner = game?.winner ?? null;
+  const isCompleted = !!game && game.active.status === "WON";
+  const winner: PlayerInGame | null =
+    game && !isActiveRound(game.active)
+      ? { id: game.active.winner_player_id, type: "human" }
+      : null;
 
   // Derive phase from active round status, or null when no active round
   const phase: SpikeActiveRound["status"] | null = activeRound?.status ?? null;

@@ -1,12 +1,11 @@
 import { SUIT_SYMBOL } from "./card-labels";
 import { BID_LABEL } from "./bid-labels";
-import type { BidValue } from "@/lib/api/types";
+import type { BidValue, SpikeBid } from "@/lib/api/types";
 
 interface RoundHeaderProps {
   phase: string;
   dealerPlayerId: string;
-  bidderPlayerId: string | null;
-  bidAmount: number | null;
+  bid: SpikeBid | null;
   trump: string | null;
   activePlayerId: string;
   playerId: string;
@@ -30,8 +29,7 @@ function displayName(id: string, playerNames: Map<string, string>): string {
 export function RoundHeader({
   phase,
   dealerPlayerId,
-  bidderPlayerId,
-  bidAmount,
+  bid,
   trump,
   activePlayerId,
   playerId,
@@ -92,13 +90,13 @@ export function RoundHeader({
           </span>
         </span>
 
-        {(bidderPlayerId != null || phase === "BIDDING") && (
+        {(bid != null || phase === "BIDDING") && (
           <span className="text-gray-500 dark:text-gray-400">
             Bidder:{" "}
-            {bidderPlayerId != null && bidAmount != null ? (
+            {bid != null ? (
               <span className="font-medium text-gray-700 dark:text-gray-200">
-                {displayName(bidderPlayerId, playerNames)} @{" "}
-                {BID_LABEL[bidAmount as BidValue] ?? String(bidAmount)}
+                {displayName(bid.player_id, playerNames)} @{" "}
+                {BID_LABEL[bid.amount as BidValue] ?? String(bid.amount)}
               </span>
             ) : (
               <span className="font-medium text-gray-400 dark:text-gray-500">

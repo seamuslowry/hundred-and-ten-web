@@ -1,5 +1,5 @@
 import type {
-  SpikeCompletedRound,
+  SpikeCompletedWithBidderRound,
   SpikeCompletedNoBiddersRound,
   Card as CardType,
 } from "@/lib/api/types";
@@ -7,7 +7,7 @@ import { SUIT_SYMBOL, NUMBER_LABEL } from "./card-labels";
 import { BidHistoryPanel } from "./bid-history-panel";
 
 interface CompletedRoundViewProps {
-  round: SpikeCompletedRound | SpikeCompletedNoBiddersRound;
+  round: SpikeCompletedWithBidderRound | SpikeCompletedNoBiddersRound;
   roundIndex: number;
   expanded: boolean;
   onToggle: () => void;
@@ -55,7 +55,9 @@ export function CompletedRoundView({
   playerNames,
 }: CompletedRoundViewProps) {
   const isCompleted = round.status === "COMPLETED";
-  const completedRound = isCompleted ? (round as SpikeCompletedRound) : null;
+  const completedRound = isCompleted
+    ? (round as SpikeCompletedWithBidderRound)
+    : null;
 
   return (
     <div className="border-t border-gray-200 dark:border-gray-700">
@@ -75,8 +77,10 @@ export function CompletedRoundView({
         </span>
         {isCompleted && completedRound ? (
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            Bidder: {displayName(completedRound.bidder_player_id, playerNames)}{" "}
-            @ {completedRound.bid_amount}
+            Bidder:{" "}
+            {completedRound.bid
+              ? `${displayName(completedRound.bid.player_id, playerNames)} @ ${completedRound.bid.amount}`
+              : "(none)"}
           </span>
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-500">
@@ -122,13 +126,13 @@ export function CompletedRoundView({
                 playerNames={playerNames}
               />
 
-              {/* Hands */}
+              {/* Initial Hands */}
               <div>
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  Hands
+                  Initial Hands
                 </p>
                 <div className="flex flex-col gap-2">
-                  {Object.entries(completedRound.hands).map(
+                  {Object.entries(completedRound.initial_hands).map(
                     ([playerId, cards]) => (
                       <div key={playerId} className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -148,12 +152,20 @@ export function CompletedRoundView({
                 </p>
                 <div className="flex flex-col gap-2">
                   {Object.entries(completedRound.discards).map(
-                    ([playerId, cards]) => (
+                    ([playerId, discard]) => (
                       <div key={playerId} className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
                           {displayName(playerId, playerNames)}
                         </span>
-                        <CardList cards={cards} />
+                        <CardList cards={discard.discarded} />
+                        {discard.received.length > 0 && (
+                          <>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              Received
+                            </span>
+                            <CardList cards={discard.received} />
+                          </>
+                        )}
                       </div>
                     ),
                   )}
