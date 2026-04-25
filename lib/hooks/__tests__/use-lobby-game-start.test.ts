@@ -147,9 +147,7 @@ describe("useLobbyGameStart", () => {
   });
 
   it("forwards custom interval to usePolling", async () => {
-    renderHook(() =>
-      useLobbyGameStart({ lobbyId: LOBBY_ID, interval: 10000 }),
-    );
+    renderHook(() => useLobbyGameStart({ lobbyId: LOBBY_ID, interval: 10000 }));
 
     await waitFor(() => {
       expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
