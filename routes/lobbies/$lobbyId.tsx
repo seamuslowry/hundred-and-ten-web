@@ -5,6 +5,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { MemberList } from "@/components/lobby/member-list";
 import { PlayerSearch } from "@/components/lobby/player-search";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { useLobbyGameStart } from "@/lib/hooks/use-lobby-game-start";
 import {
   getLobby,
   getLobbyPlayers,
@@ -28,6 +29,14 @@ function LobbyDetailContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  const { gameStarted } = useLobbyGameStart({ lobbyId });
+
+  useEffect(() => {
+    if (gameStarted) {
+      navigate({ to: "/games/$gameId", params: { gameId: lobbyId } });
+    }
+  }, [gameStarted, navigate, lobbyId]);
 
   const fetchLobby = useCallback(async () => {
     if (!user) return;
