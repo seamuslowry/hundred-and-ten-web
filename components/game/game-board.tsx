@@ -108,13 +108,6 @@ export function GameBoard({
         isStale={isStale}
       />
 
-      {activeRound.bid_history.length > 0 && (
-        <BidHistoryPanel
-          bidHistory={activeRound.bid_history}
-          playerNames={playerNames}
-        />
-      )}
-
       {actionError && (
         <div className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-900 dark:text-red-300">
           {actionError}
@@ -150,14 +143,6 @@ export function GameBoard({
         />
       )}
 
-      {Object.keys(activeRound.discards).length > 0 && (
-        <DiscardArea
-          discards={activeRound.discards}
-          playerId={playerId}
-          playerNames={playerNames}
-        />
-      )}
-
       {phase === "TRICKS" && (
         <TrickArea tricks={activeRound.tricks} playerNames={playerNames} />
       )}
@@ -178,6 +163,21 @@ export function GameBoard({
       {hand.length > 0 &&
         !(phase === "DISCARD" && myTurn) &&
         !(phase === "TRICKS" && myTurn) && <Hand cards={hand} />}
+
+      {activeRound.bid_history.length > 0 && (
+        <BidHistoryPanel
+          bidHistory={activeRound.bid_history}
+          playerNames={playerNames}
+        />
+      )}
+
+      {Object.keys(activeRound.discards).length > 0 && (
+        <DiscardArea
+          discards={activeRound.discards}
+          playerId={playerId}
+          playerNames={playerNames}
+        />
+      )}
     </div>
   );
 }
