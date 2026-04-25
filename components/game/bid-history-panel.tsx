@@ -1,19 +1,11 @@
 
-import type { SpikeBid } from "@/lib/api/types";
+import type { SpikeBid, BidValue } from "@/lib/api/types";
+import { BID_LABEL } from "./bid-labels";
 
 interface BidHistoryPanelProps {
   bidHistory: SpikeBid[];
   playerNames: Map<string, string>;
 }
-
-const BID_LABEL: Record<number, string> = {
-  0: "Pass",
-  15: "Fifteen",
-  20: "Twenty",
-  25: "Twenty Five",
-  30: "Thirty",
-  60: "Shoot the Moon",
-};
 
 function displayName(id: string, playerNames: Map<string, string>): string {
   return playerNames.get(id) ?? id.slice(0, 8);
@@ -32,7 +24,7 @@ export function BidHistoryPanel({ bidHistory, playerNames }: BidHistoryPanelProp
           <li key={i} className="text-sm text-gray-700 dark:text-gray-200">
             <span className="font-medium">{displayName(bid.player_id, playerNames)}</span>
             {": "}
-            <span>{BID_LABEL[bid.amount] ?? String(bid.amount)}</span>
+            <span>{BID_LABEL[bid.amount as BidValue] ?? String(bid.amount)}</span>
           </li>
         ))}
       </ul>

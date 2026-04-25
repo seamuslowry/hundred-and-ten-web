@@ -74,9 +74,13 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
   const rawHand = activeRound?.hands[playerId];
   const hand: Card[] = Array.isArray(rawHand) ? rawHand : [];
 
-  // Derive turn / completion
+  // Derive turn / completion. A game is complete when:
+  // - winner is present (normal case), OR
+  // - game is loaded with rounds but none are active (guards winner: null in WON status)
   const myTurn = activeRound?.active_player_id === playerId;
-  const isCompleted = !!game?.winner;
+  const isCompleted =
+    !!game?.winner ||
+    (!!game && game.rounds.length > 0 && activeRound === null);
   const winner = game?.winner ?? null;
 
   // Derive phase from active round status, or null when no active round

@@ -1,5 +1,7 @@
 
 import { SUIT_SYMBOL } from "./card-labels";
+import { BID_LABEL } from "./bid-labels";
+import type { BidValue } from "@/lib/api/types";
 
 interface RoundHeaderProps {
   phase: string;
@@ -20,15 +22,6 @@ const PHASE_LABEL: Record<string, string> = {
   TRUMP_SELECTION: "Selecting Trump",
   DISCARD: "Discarding",
   TRICKS: "Playing Tricks",
-};
-
-const BID_LABEL: Record<number, string> = {
-  0: "Pass",
-  15: "Fifteen",
-  20: "Twenty",
-  25: "Twenty Five",
-  30: "Thirty",
-  60: "Shoot the Moon",
 };
 
 function displayName(id: string, playerNames: Map<string, string>): string {
@@ -103,7 +96,7 @@ export function RoundHeader({
             Bidder:{" "}
             {bidderPlayerId != null && bidAmount != null ? (
               <span className="font-medium text-gray-700 dark:text-gray-200">
-                {displayName(bidderPlayerId, playerNames)} @ {BID_LABEL[bidAmount] ?? String(bidAmount)}
+                {displayName(bidderPlayerId, playerNames)} @ {BID_LABEL[bidAmount as BidValue] ?? String(bidAmount)}
               </span>
             ) : (
               <span className="font-medium text-gray-400 dark:text-gray-500">(pending)</span>
