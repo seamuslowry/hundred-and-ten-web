@@ -10,7 +10,6 @@ import type {
 import { performAction } from "@/lib/api/games";
 import { RoundHeader } from "./round-header";
 import { BidHistoryPanel } from "./bid-history-panel";
-import { OtherPlayersHands } from "./other-players-hands";
 import { DiscardArea } from "./discard-area";
 import { ScoreBoard } from "./score-board";
 import { Hand } from "./hand";
@@ -115,12 +114,6 @@ export function GameBoard({
           playerNames={playerNames}
         />
       )}
-
-      <OtherPlayersHands
-        hands={activeRound.hands}
-        playerId={playerId}
-        playerNames={playerNames}
-      />
 
       {actionError && (
         <div className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-900 dark:text-red-300">
