@@ -3,13 +3,18 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { GamePage } from "../$gameId";
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  const actual =
+    await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
     useParams: vi.fn().mockReturnValue({ gameId: "game-abc" }),
-    Link: ({ children, ...props }: { children: React.ReactNode; to: string }) => (
-      <a href={props.to}>{children}</a>
-    ),
+    Link: ({
+      children,
+      ...props
+    }: {
+      children: React.ReactNode;
+      to: string;
+    }) => <a href={props.to}>{children}</a>,
   };
 });
 

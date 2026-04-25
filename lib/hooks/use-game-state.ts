@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from "react";
 import { usePolling } from "./use-polling";
 import { useAuth } from "./use-auth";

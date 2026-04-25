@@ -32,24 +32,20 @@ describe("BID_LABELS", () => {
 
 describe("BidControls", () => {
   it("renders 'Shoot the Moon' button instead of '60'", () => {
-    render(
-      <BidControls currentBid={null} onBid={vi.fn()} />,
-    );
-    expect(screen.getByRole("button", { name: "Shoot the Moon" })).toBeInTheDocument();
+    render(<BidControls currentBid={null} onBid={vi.fn()} />);
+    expect(
+      screen.getByRole("button", { name: "Shoot the Moon" }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "60" })).toBeNull();
   });
 
   it("renders 'Pass' button", () => {
-    render(
-      <BidControls currentBid={null} onBid={vi.fn()} />,
-    );
+    render(<BidControls currentBid={null} onBid={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Pass" })).toBeInTheDocument();
   });
 
   it("renders buttons for 15, 20, 25, 30 with numeric labels", () => {
-    render(
-      <BidControls currentBid={null} onBid={vi.fn()} />,
-    );
+    render(<BidControls currentBid={null} onBid={vi.fn()} />);
     expect(screen.getByRole("button", { name: "15" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "20" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "25" })).toBeInTheDocument();
@@ -58,7 +54,11 @@ describe("BidControls", () => {
 
   it("disables bids at or below currentBid when canMatchCurrentBid is false", () => {
     render(
-      <BidControls currentBid={20} canMatchCurrentBid={false} onBid={vi.fn()} />,
+      <BidControls
+        currentBid={20}
+        canMatchCurrentBid={false}
+        onBid={vi.fn()}
+      />,
     );
     expect(screen.getByRole("button", { name: "15" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "20" })).toBeDisabled();
@@ -75,9 +75,7 @@ describe("BidControls", () => {
   });
 
   it("disables all bid buttons when disabled prop is true", () => {
-    render(
-      <BidControls currentBid={null} disabled onBid={vi.fn()} />,
-    );
+    render(<BidControls currentBid={null} disabled onBid={vi.fn()} />);
     for (const name of ["15", "20", "25", "30", "Shoot the Moon", "Pass"]) {
       expect(screen.getByRole("button", { name })).toBeDisabled();
     }

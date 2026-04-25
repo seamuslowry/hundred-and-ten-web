@@ -35,7 +35,11 @@ describe("RoundHeader", () => {
 
   it("shows 'Your turn' pill when activePlayerId matches playerId", () => {
     render(
-      <RoundHeader {...defaultProps} activePlayerId="player-1" playerId="player-1" />,
+      <RoundHeader
+        {...defaultProps}
+        activePlayerId="player-1"
+        playerId="player-1"
+      />,
     );
     expect(screen.getByText("Your turn")).toBeInTheDocument();
     expect(screen.queryByRole("button")).toBeNull();
@@ -67,7 +71,11 @@ describe("RoundHeader", () => {
 
   it("shows 'Waiting for Player N' with refresh button when not player's turn", () => {
     render(
-      <RoundHeader {...defaultProps} activePlayerId="player-2" playerId="player-1" />,
+      <RoundHeader
+        {...defaultProps}
+        activePlayerId="player-2"
+        playerId="player-1"
+      />,
     );
     const button = screen.getByRole("button");
     expect(button).toBeInTheDocument();
@@ -108,7 +116,11 @@ describe("RoundHeader", () => {
 
   it("refresh button meets 44px touch target", () => {
     render(
-      <RoundHeader {...defaultProps} activePlayerId="player-2" playerId="player-1" />,
+      <RoundHeader
+        {...defaultProps}
+        activePlayerId="player-2"
+        playerId="player-1"
+      />,
     );
     const button = screen.getByRole("button");
     expect(button.className).toContain("min-h-[44px]");

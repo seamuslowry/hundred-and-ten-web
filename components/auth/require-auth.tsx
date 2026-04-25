@@ -1,4 +1,3 @@
-
 import { use, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AuthContext } from "./auth-provider";

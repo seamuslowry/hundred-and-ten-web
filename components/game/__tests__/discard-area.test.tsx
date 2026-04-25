@@ -45,7 +45,11 @@ describe("DiscardArea", () => {
 
   it("renders nothing when discards map is empty", () => {
     const { container } = render(
-      <DiscardArea discards={{}} playerId="player-1" playerNames={playerNames} />,
+      <DiscardArea
+        discards={{}}
+        playerId="player-1"
+        playerNames={playerNames}
+      />,
     );
     expect(container.firstChild).toBeNull();
   });

@@ -1,4 +1,3 @@
-
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/hooks/use-auth";
 

@@ -88,7 +88,10 @@ const mockSpikeGame = {
   name: "Test Game",
   status: "BIDDING",
   winner: null,
-  players: [{ id: PLAYER_ID, type: "human" as const }, { id: OTHER_PLAYER_ID, type: "human" as const }],
+  players: [
+    { id: PLAYER_ID, type: "human" as const },
+    { id: OTHER_PLAYER_ID, type: "human" as const },
+  ],
   scores: { [PLAYER_ID]: 0, [OTHER_PLAYER_ID]: 0 },
   rounds: [mockActiveRound],
 };
@@ -287,7 +290,10 @@ describe("useGameState", () => {
     );
 
     await waitFor(() => {
-      expect(result.current.winner).toEqual({ id: OTHER_PLAYER_ID, type: "human" });
+      expect(result.current.winner).toEqual({
+        id: OTHER_PLAYER_ID,
+        type: "human",
+      });
     });
   });
 
@@ -326,7 +332,9 @@ describe("useGameState", () => {
     await waitFor(() => {
       expect(result.current.completedRounds).toHaveLength(2);
       expect(result.current.completedRounds[0].status).toBe("COMPLETED");
-      expect(result.current.completedRounds[1].status).toBe("COMPLETED_NO_BIDDERS");
+      expect(result.current.completedRounds[1].status).toBe(
+        "COMPLETED_NO_BIDDERS",
+      );
     });
   });
 

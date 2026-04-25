@@ -80,7 +80,11 @@ export function GameBoard({
             </span>
           </p>
         </div>
-        <ScoreBoard scores={scores} currentPlayerId={playerId} playerNames={playerNames} />
+        <ScoreBoard
+          scores={scores}
+          currentPlayerId={playerId}
+          playerNames={playerNames}
+        />
       </div>
     );
   }

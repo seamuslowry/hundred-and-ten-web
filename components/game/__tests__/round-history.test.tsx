@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RoundHistory } from "../round-history";
-import type { SpikeCompletedRound, SpikeCompletedNoBiddersRound } from "@/lib/api/types";
+import type {
+  SpikeCompletedRound,
+  SpikeCompletedNoBiddersRound,
+} from "@/lib/api/types";
 
 vi.mock("@/lib/firebase", () => ({ auth: {} }));
 

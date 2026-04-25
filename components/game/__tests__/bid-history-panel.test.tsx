@@ -37,7 +37,9 @@ describe("BidHistoryPanel", () => {
   });
 
   it("resolves player names from map with fallback to truncated ID", () => {
-    const bids: SpikeBid[] = [{ player_id: "unknown-player-id-xyz", amount: 15 }];
+    const bids: SpikeBid[] = [
+      { player_id: "unknown-player-id-xyz", amount: 15 },
+    ];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     // Falls back to first 8 chars of ID
     expect(screen.getByText("unknown-")).toBeInTheDocument();

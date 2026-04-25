@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CompletedRoundView } from "../completed-round-view";
-import type { SpikeCompletedRound, SpikeCompletedNoBiddersRound } from "@/lib/api/types";
+import type {
+  SpikeCompletedRound,
+  SpikeCompletedNoBiddersRound,
+} from "@/lib/api/types";
 
 vi.mock("@/lib/firebase", () => ({ auth: {} }));
 
@@ -33,17 +36,37 @@ const completedRound: SpikeCompletedRound = {
     {
       bleeding: false,
       plays: [
-        { type: "PLAY", player_id: "player-1", card: { number: "ACE", suit: "HEARTS" } },
-        { type: "PLAY", player_id: "player-2", card: { number: "KING", suit: "SPADES" } },
+        {
+          type: "PLAY",
+          player_id: "player-1",
+          card: { number: "ACE", suit: "HEARTS" },
+        },
+        {
+          type: "PLAY",
+          player_id: "player-2",
+          card: { number: "KING", suit: "SPADES" },
+        },
       ],
-      winning_play: { type: "PLAY", player_id: "player-1", card: { number: "ACE", suit: "HEARTS" } },
+      winning_play: {
+        type: "PLAY",
+        player_id: "player-1",
+        card: { number: "ACE", suit: "HEARTS" },
+      },
     },
     {
       bleeding: true,
       plays: [
-        { type: "PLAY", player_id: "player-2", card: { number: "FIVE", suit: "HEARTS" } },
+        {
+          type: "PLAY",
+          player_id: "player-2",
+          card: { number: "FIVE", suit: "HEARTS" },
+        },
       ],
-      winning_play: { type: "PLAY", player_id: "player-2", card: { number: "FIVE", suit: "HEARTS" } },
+      winning_play: {
+        type: "PLAY",
+        player_id: "player-2",
+        card: { number: "FIVE", suit: "HEARTS" },
+      },
     },
   ],
   scores: {

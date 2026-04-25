@@ -1,4 +1,3 @@
-
 import { SUIT_SYMBOL } from "./card-labels";
 import { BID_LABEL } from "./bid-labels";
 import type { BidValue } from "@/lib/api/types";
@@ -49,7 +48,9 @@ export function RoundHeader({
       {/* Phase + turn row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Phase</span>
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Phase
+          </span>
           <span className="rounded-full bg-gray-200 px-3 py-1 text-sm font-semibold dark:bg-gray-700 dark:text-gray-100">
             {phaseLabel}
           </span>
@@ -96,10 +97,13 @@ export function RoundHeader({
             Bidder:{" "}
             {bidderPlayerId != null && bidAmount != null ? (
               <span className="font-medium text-gray-700 dark:text-gray-200">
-                {displayName(bidderPlayerId, playerNames)} @ {BID_LABEL[bidAmount as BidValue] ?? String(bidAmount)}
+                {displayName(bidderPlayerId, playerNames)} @{" "}
+                {BID_LABEL[bidAmount as BidValue] ?? String(bidAmount)}
               </span>
             ) : (
-              <span className="font-medium text-gray-400 dark:text-gray-500">(pending)</span>
+              <span className="font-medium text-gray-400 dark:text-gray-500">
+                (pending)
+              </span>
             )}
           </span>
         )}

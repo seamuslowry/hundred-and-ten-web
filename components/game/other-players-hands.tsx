@@ -1,4 +1,3 @@
-
 import type { Card as CardType } from "@/lib/api/types";
 
 interface OtherPlayersHandsProps {
@@ -11,7 +10,11 @@ function displayName(id: string, playerNames: Map<string, string>): string {
   return playerNames.get(id) ?? id.slice(0, 8);
 }
 
-export function OtherPlayersHands({ hands, playerId, playerNames }: OtherPlayersHandsProps) {
+export function OtherPlayersHands({
+  hands,
+  playerId,
+  playerNames,
+}: OtherPlayersHandsProps) {
   const others = Object.entries(hands).filter(([pid]) => pid !== playerId);
 
   if (others.length === 0) return null;
@@ -26,7 +29,9 @@ export function OtherPlayersHands({ hands, playerId, playerNames }: OtherPlayers
           const count = Array.isArray(value) ? value.length : value;
           return (
             <li key={pid} className="text-sm text-gray-700 dark:text-gray-200">
-              <span className="font-medium">{displayName(pid, playerNames)}</span>
+              <span className="font-medium">
+                {displayName(pid, playerNames)}
+              </span>
               {`: ${count} card${count !== 1 ? "s" : ""}`}
             </li>
           );

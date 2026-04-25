@@ -7,7 +7,10 @@ import { useGameState } from "@/lib/hooks/use-game-state";
 import { getGamePlayers } from "@/lib/api/games";
 import { useParams, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import type { SpikeCompletedRound, SpikeCompletedNoBiddersRound } from "@/lib/api/types";
+import type {
+  SpikeCompletedRound,
+  SpikeCompletedNoBiddersRound,
+} from "@/lib/api/types";
 
 export const Route = createFileRoute("/games/$gameId")({
   component: GamePage,
@@ -32,7 +35,9 @@ function GameContent() {
   } = useGameState({ gameId, interval: 3000 });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [playerNames, setPlayerNames] = useState<Map<string, string>>(new Map());
+  const [playerNames, setPlayerNames] = useState<Map<string, string>>(
+    new Map(),
+  );
 
   useEffect(() => {
     if (!playerId || !gameId) return;
@@ -113,7 +118,12 @@ function GameContent() {
           isRefreshing={isRefreshing}
         />
         <RoundHistory
-          completedRounds={completedRounds as (SpikeCompletedRound | SpikeCompletedNoBiddersRound)[]}
+          completedRounds={
+            completedRounds as (
+              | SpikeCompletedRound
+              | SpikeCompletedNoBiddersRound
+            )[]
+          }
           playerNames={playerNames}
         />
       </div>

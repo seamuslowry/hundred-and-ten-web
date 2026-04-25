@@ -4,7 +4,11 @@ interface ScoreBoardProps {
   playerNames?: Map<string, string>;
 }
 
-export function ScoreBoard({ scores, currentPlayerId, playerNames }: ScoreBoardProps) {
+export function ScoreBoard({
+  scores,
+  currentPlayerId,
+  playerNames,
+}: ScoreBoardProps) {
   const entries = Object.entries(scores).sort(([, a], [, b]) => b - a);
 
   if (entries.length === 0) return null;
@@ -25,7 +29,9 @@ export function ScoreBoard({ scores, currentPlayerId, playerNames }: ScoreBoardP
             }`}
           >
             <span className="text-sm">
-              {playerNames ? (playerNames.get(playerId) ?? playerId.slice(0, 8)) : playerId.slice(0, 8)}
+              {playerNames
+                ? (playerNames.get(playerId) ?? playerId.slice(0, 8))
+                : playerId.slice(0, 8)}
               {playerId === currentPlayerId && " (you)"}
             </span>
             <span className="font-mono">{score}</span>

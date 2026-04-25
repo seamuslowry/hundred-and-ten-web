@@ -1,4 +1,3 @@
-
 import type { SelectableSuit } from "@/lib/api/types";
 
 interface TrumpSelectorProps {

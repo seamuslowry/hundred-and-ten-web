@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import type { Suggestion } from "@/lib/api/types";
 import { getSuggestions } from "@/lib/api/games";

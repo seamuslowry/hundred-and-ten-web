@@ -1,4 +1,3 @@
-
 import type { Card as CardType } from "@/lib/api/types";
 import { Card } from "./card";
 
@@ -12,7 +11,11 @@ function displayName(id: string, playerNames: Map<string, string>): string {
   return playerNames.get(id) ?? id.slice(0, 8);
 }
 
-export function DiscardArea({ discards, playerId, playerNames }: DiscardAreaProps) {
+export function DiscardArea({
+  discards,
+  playerId,
+  playerNames,
+}: DiscardAreaProps) {
   const entries = Object.entries(discards);
   if (entries.length === 0) return null;
 
@@ -41,7 +44,9 @@ export function DiscardArea({ discards, playerId, playerNames }: DiscardAreaProp
           const count = Array.isArray(value) ? value.length : value;
           return (
             <p key={pid} className="text-sm text-gray-700 dark:text-gray-200">
-              <span className="font-medium">{displayName(pid, playerNames)}</span>
+              <span className="font-medium">
+                {displayName(pid, playerNames)}
+              </span>
               {`: ${count} card${count !== 1 ? "s" : ""}`}
             </p>
           );
