@@ -1,4 +1,3 @@
-
 import type { Card as CardType } from "@/lib/api/types";
 import { Card } from "./card";
 

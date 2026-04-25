@@ -231,7 +231,7 @@ export function DiscardControls({ cards, trump, disabled, onDiscard }: DiscardCo
 {phase === "DISCARD" && myTurn && (
   <DiscardControls
     cards={hand}
-    trump={started.trump}
+    trump={activeRound.trump}
     disabled={actionInFlight}
     onDiscard={(cards) => doAction({ type: "DISCARD", cards })}
   />
@@ -241,5 +241,5 @@ export function DiscardControls({ cards, trump, disabled, onDiscard }: DiscardCo
 ## Related
 
 - `components/game/discard-controls.tsx` — primary implementation
-- `components/game/game-board.tsx` — passes `trump={started.trump}` to `DiscardControls`
+- `components/game/game-board.tsx` — passes `trump={activeRound.trump}` to `DiscardControls`
 - `docs/solutions/ui-bugs/dealer-bid-at-current-value-disabled-2026-04-21.md` — analogous pattern (removing an overly strict frontend guard in a game control component)

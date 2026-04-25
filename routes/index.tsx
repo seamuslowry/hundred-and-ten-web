@@ -1,4 +1,8 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { SignInButton } from "@/components/auth/sign-in-button";

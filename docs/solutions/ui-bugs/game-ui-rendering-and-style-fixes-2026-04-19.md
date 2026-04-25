@@ -39,20 +39,20 @@ A batch of UI polish bugs in the game view made the interface misleading or brok
 
 ### Bug 1 — Duplicate ScoreBoard
 
-`GameBoard` rendered `<ScoreBoard>` unconditionally in its completed-game branch. `game-page.tsx` also renders `<ScoreBoard>` in its `lg+` sidebar. Fix: gate `GameBoard`'s copy to mobile only using `lg:hidden`.
+`GameBoard` rendered `<ScoreBoard>` unconditionally in its completed-game branch, while `routes/games/$gameId.tsx` also renders a top-level `<ScoreBoard>`. At the time this was written, the fix was to gate `GameBoard`'s copy to mobile only using `lg:hidden` alongside a sidebar column.
+
+**Note (2026-04-25):** The page layout was later restructured into a single column with no desktop sidebar. `game-board.tsx` still renders `<ScoreBoard>` in the completed branch (`game-board.tsx:82`) and `routes/games/$gameId.tsx` renders it at the top level — both unconditionally. The `lg:hidden` fix described below was not carried through the migration; the duplication concern remains but manifests as two scoreboards stacked in a single column rather than a sidebar duplication.
 
 ```tsx
 // components/game/game-board.tsx — completed branch
 // Before
 <ScoreBoard game={game} />
 
-// After
+// After (original fix — now superseded by layout restructure)
 <div className="lg:hidden">
   <ScoreBoard game={game} />
 </div>
 ```
-
-The sidebar in `routes/games/$gameId.tsx` is already inside a `hidden lg:block` column, so the scoreboard now appears exactly once at every breakpoint.
 
 ---
 
@@ -97,7 +97,7 @@ className={`... ${interactionClasses}`}
 `game.phase === 'BIDDING' && game.bidder_player_id` can never be true: `bidder_player_id` is only populated by the server *after* bidding concludes, i.e. when the phase is no longer `BIDDING`. The intent is to show the bidder through `DISCARD` and `TRICKS` — exactly when the field is set.
 
 ```tsx
-// components/game/game-status-bar.tsx
+// components/game/game-status-bar.tsx (deleted 2026-04-24; replaced by round-header.tsx)
 // Before
 {game.phase === 'BIDDING' && game.bidder_player_id && (
   <span>Bidder: {playerName(game.bidder_player_id)}</span>
@@ -111,6 +111,8 @@ className={`... ${interactionClasses}`}
 
 `bidder_player_id` is set once after bidding and retained for the life of the round, so it is non-null exactly when it should be displayed.
 
+**Note (2026-04-25):** `game-status-bar.tsx` was deleted in the round-based game view migration. The bidder display moved to `components/game/round-header.tsx`. The API field also changed: `bidder_player_id: string | null` was replaced by `bid: SpikeBid | null` (a `{ player_id, amount }` object). `round-header.tsx` applies the same nullability principle: `{(bid != null || phase === "BIDDING") && ...}`. See `docs/solutions/integration-issues/spike-game-openapi-breaking-change-2026-04-25.md` for the full field migration.
+
 ## Prevention
 
 - **Never use gray fills for interactive elements.** Reserve gray/neutral backgrounds for disabled or inert UI. Primary actions (including "soft" choices like Pass) should use a filled color token so enabled vs. disabled states are always visually distinct.
@@ -121,4 +123,4 @@ className={`... ${interactionClasses}`}
 ## Related Issues
 
 - ~~`docs/solutions/best-practices/use-client-directive-ssr-migration-2026-04-19.md`~~ — deleted; that doc described `'use client'` directive cleanup after an SSR migration that never happened — the actual migration target was Vite SPA where `'use client'` is meaningless.
-- This session also added dark mode (`dark:` Tailwind variants throughout), a `TrickHistory` collapsible component, `GameStatusBar` enhancements (standing bid, trump suit), responsive card sizing, and removal of hints/suggestions UI. Those are additive changes, not bugs.
+- This session also added dark mode (`dark:` Tailwind variants throughout), a `TrickHistory` collapsible component, `GameStatusBar` enhancements (standing bid, trump suit), responsive card sizing, and removal of hints/suggestions UI. Those are additive changes, not bugs. Note: `GameStatusBar` was subsequently deleted in the 2026-04-24 migration; its role is now split between `round-header.tsx` and the broader round-based game view.

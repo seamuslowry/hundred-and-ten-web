@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import type { Trick, Card as CardType } from "@/lib/api/types";
 import { SUIT_SYMBOL, NUMBER_LABEL } from "./card-labels";

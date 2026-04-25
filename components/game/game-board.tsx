@@ -1,14 +1,16 @@
 import { useState } from "react";
 import type {
-  StartedGame,
-  CompletedGame,
+  SpikeActiveRound,
+  PlayerInGame,
   Card as CardType,
   GameAction,
   BidValue,
   SelectableSuit,
 } from "@/lib/api/types";
 import { performAction } from "@/lib/api/games";
-import { GameStatusBar } from "./game-status-bar";
+import { RoundHeader } from "./round-header";
+import { BidHistoryPanel } from "./bid-history-panel";
+import { DiscardArea } from "./discard-area";
 import { ScoreBoard } from "./score-board";
 import { Hand } from "./hand";
 import { BidControls } from "./bid-controls";
@@ -18,9 +20,13 @@ import { TrickArea } from "./trick-area";
 import { TrickHistory } from "./trick-history";
 
 interface GameBoardProps {
-  started: StartedGame | null;
-  completed: CompletedGame | null;
+  gameId: string;
+  activeRound: SpikeActiveRound | null;
+  isCompleted: boolean;
+  winner: PlayerInGame | null;
   hand: CardType[];
+  scores: Record<string, number>;
+  playerNames: Map<string, string>;
   myTurn: boolean;
   isStale: boolean;
   playerId: string;
@@ -30,9 +36,13 @@ interface GameBoardProps {
 }
 
 export function GameBoard({
-  started,
-  completed,
+  gameId,
+  activeRound,
+  isCompleted,
+  winner,
   hand,
+  scores,
+  playerNames,
   myTurn,
   isStale,
   playerId,
@@ -44,11 +54,11 @@ export function GameBoard({
   const [actionError, setActionError] = useState<string | null>(null);
 
   async function doAction(action: GameAction) {
-    if (!started || actionInFlight) return;
+    if (!activeRound || actionInFlight) return;
     setActionInFlight(true);
     setActionError(null);
     try {
-      await performAction(playerId, started.id, action);
+      await performAction(playerId, gameId, action);
       await onActionComplete();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "Action failed");
@@ -57,63 +67,45 @@ export function GameBoard({
     }
   }
 
-  if (completed) {
+  if (isCompleted && winner) {
     return (
       <div className="flex flex-col gap-4">
-        <GameStatusBar
-          phase="WON"
-          myTurn={false}
-          isStale={isStale}
-          onRefresh={onRefresh}
-          isRefreshing={isRefreshing}
-        />
         <div className="rounded-lg bg-green-50 p-6 text-center dark:bg-green-900">
           <h2 className="text-xl font-bold dark:text-gray-100">Game Over</h2>
           <p className="mt-2 text-lg dark:text-gray-200">
-            Winner: <span className="font-semibold">{completed.winner.id}</span>
+            Winner:{" "}
+            <span className="font-semibold">
+              {playerNames.get(winner.id) ?? winner.id.slice(0, 8)}
+            </span>
           </p>
         </div>
-        <div className="lg:hidden">
-          <ScoreBoard scores={completed.scores} currentPlayerId={playerId} />
-        </div>
+        <ScoreBoard
+          scores={scores}
+          currentPlayerId={playerId}
+          playerNames={playerNames}
+        />
       </div>
     );
   }
 
-  if (!started) return null;
+  if (!activeRound) return null;
 
-  const phase = started.status;
-  const playerNames = new Map<string, string>(
-    started.players.map((p) => [p.id, p.id.slice(0, 8)]),
-  );
+  const phase = activeRound.status;
 
   return (
     <div className="flex flex-col gap-4">
-      <GameStatusBar
+      <RoundHeader
         phase={phase}
-        myTurn={myTurn}
-        isStale={isStale}
-        activePlayerId={started.active_player_id}
-        bidAmount={started.bid_amount}
-        bidderPlayerId={started.bidder_player_id}
-        dealerPlayerId={started.dealer_player_id}
+        dealerPlayerId={activeRound.dealer_player_id}
+        bid={activeRound.bid}
+        trump={activeRound.trump}
+        activePlayerId={activeRound.active_player_id}
         playerId={playerId}
-        trump={started.trump}
+        playerNames={playerNames}
         onRefresh={onRefresh}
         isRefreshing={isRefreshing}
+        isStale={isStale}
       />
-
-      <div className="lg:hidden">
-        <ScoreBoard scores={started.scores} currentPlayerId={playerId} />
-      </div>
-
-      {phase === "TRICKS" && (
-        <TrickArea tricks={started.tricks} playerNames={playerNames} />
-      )}
-
-      {phase === "TRICKS" && (
-        <TrickHistory tricks={started.tricks} playerNames={playerNames} />
-      )}
 
       {actionError && (
         <div className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-900 dark:text-red-300">
@@ -123,11 +115,8 @@ export function GameBoard({
 
       {phase === "BIDDING" && myTurn && (
         <BidControls
-          currentBid={started.bid_amount}
-          canMatchCurrentBid={
-            started.dealer_player_id != null &&
-            started.dealer_player_id === playerId
-          }
+          currentBid={activeRound.bid?.amount ?? null}
+          canMatchCurrentBid={activeRound.dealer_player_id === playerId}
           disabled={actionInFlight}
           onBid={(amount: BidValue) => doAction({ type: "BID", amount })}
         />
@@ -145,12 +134,20 @@ export function GameBoard({
       {phase === "DISCARD" && myTurn && (
         <DiscardControls
           cards={hand}
-          trump={started.trump}
+          trump={activeRound.trump}
           disabled={actionInFlight}
           onDiscard={(cards: CardType[]) =>
             doAction({ type: "DISCARD", cards })
           }
         />
+      )}
+
+      {phase === "TRICKS" && (
+        <TrickArea tricks={activeRound.tricks} playerNames={playerNames} />
+      )}
+
+      {phase === "TRICKS" && (
+        <TrickHistory tricks={activeRound.tricks} playerNames={playerNames} />
       )}
 
       {phase === "TRICKS" && myTurn && (
@@ -165,6 +162,21 @@ export function GameBoard({
       {hand.length > 0 &&
         !(phase === "DISCARD" && myTurn) &&
         !(phase === "TRICKS" && myTurn) && <Hand cards={hand} />}
+
+      {activeRound.bid_history.length > 0 && (
+        <BidHistoryPanel
+          bidHistory={activeRound.bid_history}
+          playerNames={playerNames}
+        />
+      )}
+
+      {Object.keys(activeRound.discards).length > 0 && (
+        <DiscardArea
+          discards={activeRound.discards}
+          playerId={playerId}
+          playerNames={playerNames}
+        />
+      )}
     </div>
   );
 }

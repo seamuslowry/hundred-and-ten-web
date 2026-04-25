@@ -1,4 +1,3 @@
-
 interface SuggestionToggleProps {
   showHints: boolean;
   hasSuggestions: boolean;

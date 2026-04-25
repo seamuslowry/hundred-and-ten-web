@@ -8,7 +8,7 @@ vi.mock("../use-auth", () => ({
 }));
 
 vi.mock("@/lib/api/games", () => ({
-  getGame: vi.fn(),
+  getSpikeGame: vi.fn(),
 }));
 
 vi.mock("../use-polling", async (importOriginal) => {
@@ -20,40 +20,110 @@ vi.mock("../use-polling", async (importOriginal) => {
 });
 
 import { useAuth } from "../use-auth";
-import { getGame } from "@/lib/api/games";
+import { getSpikeGame } from "@/lib/api/games";
 import { usePolling } from "../use-polling";
 
 const mockUsePolling = vi.mocked(usePolling);
-
 const mockUseAuth = vi.mocked(useAuth);
-const mockGetGame = vi.mocked(getGame);
+const mockGetSpikeGame = vi.mocked(getSpikeGame);
 
 const PLAYER_ID = "player-uid-123";
+const OTHER_PLAYER_ID = "other-player";
 const GAME_ID = "game-abc-456";
 
-const mockStartedGame = {
+// A hand with one card belonging to the current player
+const MY_HAND = [{ number: "ACE" as const, suit: "SPADES" as const }];
+
+// Active round where it's NOT the current player's turn
+const mockActiveRound = {
   status: "BIDDING" as const,
-  id: GAME_ID,
-  active_player_id: "other-player",
-  players: [],
-  scores: {},
-  bid_amount: null,
-  bidder_player_id: null,
-  dealer_player_id: null,
+  dealer_player_id: OTHER_PLAYER_ID,
+  bid_history: [],
+  bid: null,
+  hands: { [PLAYER_ID]: MY_HAND, [OTHER_PLAYER_ID]: 5 },
+  discards: {},
   trump: null,
+  tricks: [],
+  active_player_id: OTHER_PLAYER_ID,
+  queued_actions: [],
 };
 
-const mockMyTurnGame = {
-  ...mockStartedGame,
+// Active round where it IS the current player's turn
+const mockMyTurnRound = {
+  ...mockActiveRound,
   active_player_id: PLAYER_ID,
 };
 
-const mockCompletedGame = {
-  status: "WON" as const,
+// Active round in TRICKS phase
+const mockTricksRound = {
+  ...mockActiveRound,
+  status: "TRICKS" as const,
+};
+
+// Completed round
+const mockCompletedRound = {
+  status: "COMPLETED" as const,
+  dealer_player_id: OTHER_PLAYER_ID,
+  trump: "SPADES" as const,
+  bid_history: [],
+  bid: { player_id: OTHER_PLAYER_ID, amount: 20 },
+  initial_hands: { [PLAYER_ID]: MY_HAND, [OTHER_PLAYER_ID]: MY_HAND },
+  discards: {},
+  tricks: [],
+  scores: { [PLAYER_ID]: 0, [OTHER_PLAYER_ID]: 20 },
+};
+
+// No-bidders completed round
+const mockNoBiddersRound = {
+  status: "COMPLETED_NO_BIDDERS" as const,
+  dealer_player_id: OTHER_PLAYER_ID,
+  initial_hands: { [PLAYER_ID]: MY_HAND },
+};
+
+// Base SpikeGame with one active round
+const mockSpikeGame = {
   id: GAME_ID,
-  winner: { id: "other-player" },
-  scores: {},
-  players: [],
+  name: "Test Game",
+  players: [
+    { id: PLAYER_ID, type: "human" as const },
+    { id: OTHER_PLAYER_ID, type: "human" as const },
+  ],
+  scores: { [PLAYER_ID]: 0, [OTHER_PLAYER_ID]: 0 },
+  active: mockActiveRound,
+  completed_rounds: [],
+};
+
+// SpikeGame where it's the current player's turn
+const mockMyTurnGame = {
+  ...mockSpikeGame,
+  active: mockMyTurnRound,
+};
+
+// SpikeGame that is completed (has a winner)
+const mockCompletedGame = {
+  ...mockSpikeGame,
+  active: {
+    status: "WON" as const,
+    winner_player_id: OTHER_PLAYER_ID,
+  },
+  completed_rounds: [mockCompletedRound],
+};
+
+// SpikeGame with two completed rounds and one active round
+const mockMultiRoundGame = {
+  ...mockSpikeGame,
+  active: mockActiveRound,
+  completed_rounds: [mockCompletedRound, mockNoBiddersRound],
+};
+
+// SpikeGame with only completed rounds (no active round — game won)
+const mockAllCompletedGame = {
+  ...mockSpikeGame,
+  active: {
+    status: "WON" as const,
+    winner_player_id: OTHER_PLAYER_ID,
+  },
+  completed_rounds: [mockCompletedRound, mockNoBiddersRound],
 };
 
 describe("useGameState", () => {
@@ -66,7 +136,7 @@ describe("useGameState", () => {
       signOut: vi.fn(),
       getToken: vi.fn(),
     });
-    mockGetGame.mockResolvedValue(mockStartedGame as never);
+    mockGetSpikeGame.mockResolvedValue(mockSpikeGame as never);
   });
 
   afterEach(() => {
@@ -74,13 +144,101 @@ describe("useGameState", () => {
     vi.clearAllMocks();
   });
 
-  it("starts polling immediately on mount (waiting for opponent)", async () => {
+  // ─── Endpoint ──────────────────────────────────────────────────────────────
+
+  it("fetches from the spike endpoint (getSpikeGame, not getGame)", async () => {
     renderHook(() => useGameState({ gameId: GAME_ID, interval: 30000 }));
 
     await waitFor(() => {
-      expect(mockGetGame).toHaveBeenCalledTimes(1);
+      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
+    });
+    expect(mockGetSpikeGame).toHaveBeenCalledWith(PLAYER_ID, GAME_ID);
+  });
+
+  // ─── Hand extraction ───────────────────────────────────────────────────────
+
+  it("extracts hand from activeRound.hands[playerId] when value is Card[]", async () => {
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.hand).toEqual(MY_HAND);
     });
   });
+
+  it("falls back to empty array when hands[playerId] is a number", async () => {
+    const gameWithNumericHand = {
+      ...mockSpikeGame,
+      active: { ...mockActiveRound, hands: { [PLAYER_ID]: 5 } },
+    };
+    mockGetSpikeGame.mockResolvedValue(gameWithNumericHand as never);
+
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.hand).toEqual([]);
+    });
+  });
+
+  it("falls back to empty array when hands[playerId] is missing", async () => {
+    const gameWithMissingHand = {
+      ...mockSpikeGame,
+      active: { ...mockActiveRound, hands: {} },
+    };
+    mockGetSpikeGame.mockResolvedValue(gameWithMissingHand as never);
+
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.hand).toEqual([]);
+    });
+  });
+
+  // ─── Phase ─────────────────────────────────────────────────────────────────
+
+  it("derives phase from activeRound.status", async () => {
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.phase).toBe("BIDDING");
+    });
+  });
+
+  it("derives phase as TRICKS when activeRound is in TRICKS", async () => {
+    mockGetSpikeGame.mockResolvedValue({
+      ...mockSpikeGame,
+      active: mockTricksRound,
+    } as never);
+
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.phase).toBe("TRICKS");
+    });
+  });
+
+  it("returns phase null when there is no active round", async () => {
+    mockGetSpikeGame.mockResolvedValue(mockAllCompletedGame as never);
+
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.phase).toBeNull();
+    });
+  });
+
+  // ─── myTurn ────────────────────────────────────────────────────────────────
 
   it("derives myTurn false when active player is not self", async () => {
     const { result } = renderHook(() =>
@@ -92,8 +250,8 @@ describe("useGameState", () => {
     });
   });
 
-  it("derives myTurn true when active player is self", async () => {
-    mockGetGame.mockResolvedValue(mockMyTurnGame as never);
+  it("derives myTurn true when activeRound.active_player_id === playerId", async () => {
+    mockGetSpikeGame.mockResolvedValue(mockMyTurnGame as never);
 
     const { result } = renderHook(() =>
       useGameState({ gameId: GAME_ID, interval: 30000 }),
@@ -104,42 +262,146 @@ describe("useGameState", () => {
     });
   });
 
+  // ─── isCompleted / winner ──────────────────────────────────────────────────
+
+  it("derives isCompleted true when game.winner is set", async () => {
+    mockGetSpikeGame.mockResolvedValue(mockCompletedGame as never);
+
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.isCompleted).toBe(true);
+    });
+  });
+
+  it("derives isCompleted false when active round is in-progress", async () => {
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.isCompleted).toBe(false);
+    });
+  });
+
+  it("exposes the winner from SpikeWonInformation", async () => {
+    mockGetSpikeGame.mockResolvedValue(mockCompletedGame as never);
+
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.winner).toEqual({
+        id: OTHER_PLAYER_ID,
+        type: "human",
+      });
+    });
+  });
+
+  // ─── activeRound / completedRounds ─────────────────────────────────────────
+
+  it("returns activeRound as null when all rounds are completed", async () => {
+    mockGetSpikeGame.mockResolvedValue(mockAllCompletedGame as never);
+
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.activeRound).toBeNull();
+    });
+  });
+
+  it("returns active round when an in-progress round exists", async () => {
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.activeRound).not.toBeNull();
+      expect(result.current.activeRound?.status).toBe("BIDDING");
+    });
+  });
+
+  it("completedRounds contains exactly the non-active rounds", async () => {
+    mockGetSpikeGame.mockResolvedValue(mockMultiRoundGame as never);
+
+    const { result } = renderHook(() =>
+      useGameState({ gameId: GAME_ID, interval: 30000 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.completedRounds).toHaveLength(2);
+      expect(result.current.completedRounds[0].status).toBe("COMPLETED");
+      expect(result.current.completedRounds[1].status).toBe(
+        "COMPLETED_NO_BIDDERS",
+      );
+    });
+  });
+
+  // ─── Polling control ───────────────────────────────────────────────────────
+
+  it("starts polling immediately on mount (waiting for opponent)", async () => {
+    renderHook(() => useGameState({ gameId: GAME_ID, interval: 30000 }));
+
+    await waitFor(() => {
+      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("polls at the configured interval when waiting for opponent", async () => {
+    renderHook(() => useGameState({ gameId: GAME_ID, interval: 30000 }));
+
+    await waitFor(() => {
+      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30000);
+    });
+
+    await waitFor(() => {
+      expect(mockGetSpikeGame).toHaveBeenCalledTimes(2);
+    });
+  });
+
   it("disables polling after myTurn becomes true", async () => {
-    mockGetGame.mockResolvedValue(mockMyTurnGame as never);
+    mockGetSpikeGame.mockResolvedValue(mockMyTurnGame as never);
 
     renderHook(() => useGameState({ gameId: GAME_ID, interval: 30000 }));
 
-    // Wait for initial fetch to complete
     await waitFor(() => {
-      expect(mockGetGame).toHaveBeenCalledTimes(1);
+      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
     });
 
-    const callsBefore = mockGetGame.mock.calls.length;
+    const callsBefore = mockGetSpikeGame.mock.calls.length;
 
-    // Advance well past the 30s interval — should not poll again
     await act(async () => {
       await vi.advanceTimersByTimeAsync(60000);
     });
 
-    expect(mockGetGame.mock.calls.length).toBe(callsBefore);
+    expect(mockGetSpikeGame.mock.calls.length).toBe(callsBefore);
   });
 
   it("disables polling when game is completed", async () => {
-    mockGetGame.mockResolvedValue(mockCompletedGame as never);
+    mockGetSpikeGame.mockResolvedValue(mockCompletedGame as never);
 
     renderHook(() => useGameState({ gameId: GAME_ID, interval: 30000 }));
 
     await waitFor(() => {
-      expect(mockGetGame).toHaveBeenCalledTimes(1);
+      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
     });
 
-    const callsBefore = mockGetGame.mock.calls.length;
+    const callsBefore = mockGetSpikeGame.mock.calls.length;
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(60000);
     });
 
-    expect(mockGetGame.mock.calls.length).toBe(callsBefore);
+    expect(mockGetSpikeGame.mock.calls.length).toBe(callsBefore);
   });
 
   it("does not poll when unauthenticated (auth gate wins)", async () => {
@@ -157,30 +419,14 @@ describe("useGameState", () => {
       await vi.advanceTimersByTimeAsync(60000);
     });
 
-    expect(mockGetGame).not.toHaveBeenCalled();
-  });
-
-  it("polls at the configured interval when waiting for opponent", async () => {
-    renderHook(() => useGameState({ gameId: GAME_ID, interval: 30000 }));
-
-    await waitFor(() => {
-      expect(mockGetGame).toHaveBeenCalledTimes(1);
-    });
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(30000);
-    });
-
-    await waitFor(() => {
-      expect(mockGetGame).toHaveBeenCalledTimes(2);
-    });
+    expect(mockGetSpikeGame).not.toHaveBeenCalled();
   });
 
   it("forwards the configured interval to usePolling when waiting for opponent", async () => {
     renderHook(() => useGameState({ gameId: GAME_ID, interval: 30000 }));
 
     await waitFor(() => {
-      expect(mockGetGame).toHaveBeenCalledTimes(1);
+      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
     });
 
     expect(mockUsePolling).toHaveBeenCalledWith(

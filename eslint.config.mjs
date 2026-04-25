@@ -42,7 +42,13 @@ const eslintConfig = defineConfig([
     },
   },
 
-  globalIgnores(["dist/**", "out/**", "build/**", "routeTree.gen.ts"]),
+  globalIgnores([
+    "dist/**",
+    "out/**",
+    "build/**",
+    "routeTree.gen.ts",
+    ".infrastructure/**",
+  ]),
 ]);
 
 export default eslintConfig;

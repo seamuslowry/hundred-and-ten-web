@@ -1,11 +1,5 @@
 // API response types matching the backend schemas
 
-export type GameStatus =
-  | "BIDDING"
-  | "TRUMP_SELECTION"
-  | "DISCARD"
-  | "TRICKS"
-  | "WON";
 export type Suit = "HEARTS" | "DIAMONDS" | "CLUBS" | "SPADES" | "JOKER";
 export type SelectableSuit = "HEARTS" | "DIAMONDS" | "CLUBS" | "SPADES";
 export type CardNumber =
@@ -41,16 +35,6 @@ export interface PlayerInGame {
   type: "human" | "cpu-easy";
 }
 
-export interface SelfInRound extends PlayerInGame {
-  hand: Card[];
-}
-
-export interface OtherPlayerInRound extends PlayerInGame {
-  hand_size: number;
-}
-
-export type PlayerInRound = SelfInRound | OtherPlayerInRound;
-
 export interface Lobby {
   id: string;
   name: string;
@@ -58,20 +42,6 @@ export interface Lobby {
   organizer: PlayerInGame;
   players: PlayerInGame[];
   invitees: PlayerInGame[];
-}
-
-export interface StartedGame {
-  id: string;
-  name: string;
-  status: Exclude<GameStatus, "WON">;
-  scores: Record<string, number>;
-  dealer_player_id: string;
-  bidder_player_id: string | null;
-  bid_amount: number | null;
-  trump: SelectableSuit | null;
-  active_player_id: string | null;
-  players: PlayerInRound[];
-  tricks: Trick[];
 }
 
 export interface Trick {
@@ -85,18 +55,6 @@ export interface PlayCard {
   player_id: string;
   card: Card;
 }
-
-export interface CompletedGame {
-  id: string;
-  name: string;
-  status: "WON";
-  scores: Record<string, number>;
-  winner: PlayerInGame;
-  organizer: PlayerInGame;
-  players: PlayerInGame[];
-}
-
-export type Game = StartedGame | CompletedGame;
 
 export type GameAction =
   | { type: "BID"; amount: BidValue }
@@ -118,4 +76,67 @@ export interface SearchRequest {
 
 export interface ApiEvent {
   [key: string]: unknown;
+}
+
+// Spike endpoint types — round-based game response
+
+export interface SpikeBid {
+  player_id: string;
+  amount: number;
+}
+
+export interface SpikeDiscard {
+  discarded: Card[];
+  received: Card[];
+}
+
+export interface SpikeGame {
+  id: string;
+  name: string;
+  players: PlayerInGame[];
+  scores: Record<string, number>;
+  active: SpikeActive;
+  completed_rounds: SpikeCompletedRound[];
+}
+
+export type SpikeActive = SpikeActiveRound | SpikeWonInformation;
+
+export interface SpikeWonInformation {
+  status: "WON";
+  winner_player_id: string;
+}
+
+export type SpikeCompletedRound =
+  | SpikeCompletedWithBidderRound
+  | SpikeCompletedNoBiddersRound;
+
+export interface SpikeCompletedWithBidderRound {
+  status: "COMPLETED";
+  dealer_player_id: string;
+  trump: SelectableSuit;
+  bid_history: SpikeBid[];
+  bid: SpikeBid | null;
+  initial_hands: Record<string, Card[]>;
+  discards: Record<string, SpikeDiscard>;
+  tricks: Trick[];
+  scores: Record<string, number>;
+}
+
+export interface SpikeCompletedNoBiddersRound {
+  status: "COMPLETED_NO_BIDDERS";
+  dealer_player_id: string;
+  initial_hands: Record<string, Card[]>;
+}
+
+export interface SpikeActiveRound {
+  status: "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS";
+  dealer_player_id: string;
+  bid_history: SpikeBid[];
+  bid: SpikeBid | null;
+  hands: Record<string, Card[] | number>;
+  trump: SelectableSuit | null;
+  discards: Record<string, SpikeDiscard | number>;
+  tricks: Trick[];
+  active_player_id: string;
+  queued_actions: unknown[];
 }

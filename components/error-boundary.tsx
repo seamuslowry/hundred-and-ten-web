@@ -1,4 +1,3 @@
-
 import { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {

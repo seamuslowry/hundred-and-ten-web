@@ -2,9 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { GameBoard } from "@/components/game/game-board";
 import { ScoreBoard } from "@/components/game/score-board";
+import { RoundHistory } from "@/components/game/round-history";
 import { useGameState } from "@/lib/hooks/use-game-state";
+import { getGamePlayers } from "@/lib/api/games";
 import { useParams, Link } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export const Route = createFileRoute("/games/$gameId")({
   component: GamePage,
@@ -13,8 +15,11 @@ export const Route = createFileRoute("/games/$gameId")({
 function GameContent() {
   const { gameId } = useParams({ from: "/games/$gameId" });
   const {
-    started,
-    completed,
+    game,
+    activeRound,
+    completedRounds,
+    isCompleted,
+    winner,
     loading,
     error,
     isStale,
@@ -26,6 +31,20 @@ function GameContent() {
   } = useGameState({ gameId, interval: 3000 });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [playerNames, setPlayerNames] = useState<Map<string, string>>(
+    new Map(),
+  );
+
+  useEffect(() => {
+    if (!playerId || !gameId) return;
+    getGamePlayers(playerId, gameId)
+      .then((players) => {
+        setPlayerNames(new Map(players.map((p) => [p.id, p.name])));
+      })
+      .catch(() => {
+        // Fall back to truncated IDs (playerNames stays empty Map)
+      });
+  }, [playerId, gameId]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -46,7 +65,7 @@ function GameContent() {
     );
   }
 
-  if (error && !started && !completed) {
+  if (error && !game) {
     return (
       <main className="mx-auto max-w-2xl p-4">
         <p className="text-red-600">Failed to load game: {error.message}</p>
@@ -54,15 +73,13 @@ function GameContent() {
     );
   }
 
-  if (!phase) {
+  if (!phase && !isCompleted) {
     return (
       <main className="mx-auto max-w-2xl p-4">
         <p className="text-gray-500">Game not found.</p>
       </main>
     );
   }
-
-  const scores = started?.scores ?? completed?.scores ?? {};
 
   return (
     <main className="mx-auto w-full max-w-2xl p-4 md:max-w-4xl lg:max-w-6xl">
@@ -75,11 +92,20 @@ function GameContent() {
       <h1 className="mb-4 text-2xl font-bold dark:text-gray-100">
         Game {gameId.slice(0, 8)}
       </h1>
-      <div className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-6">
+      <div className="flex flex-col gap-4">
+        <ScoreBoard
+          scores={game?.scores ?? {}}
+          currentPlayerId={playerId}
+          playerNames={playerNames}
+        />
         <GameBoard
-          started={started}
-          completed={completed}
+          gameId={gameId}
+          activeRound={activeRound}
+          isCompleted={isCompleted}
+          winner={winner}
           hand={hand}
+          scores={game?.scores ?? {}}
+          playerNames={playerNames}
           myTurn={myTurn}
           isStale={isStale}
           playerId={playerId}
@@ -87,9 +113,10 @@ function GameContent() {
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
         />
-        <aside className="hidden lg:flex lg:flex-col lg:gap-4">
-          <ScoreBoard scores={scores} currentPlayerId={playerId} />
-        </aside>
+        <RoundHistory
+          completedRounds={completedRounds}
+          playerNames={playerNames}
+        />
       </div>
     </main>
   );

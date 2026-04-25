@@ -1,13 +1,14 @@
-
 import { useCallback, useState } from "react";
 import { usePolling } from "./use-polling";
 import { useAuth } from "./use-auth";
-import { getGame } from "@/lib/api/games";
+import { getSpikeGame } from "@/lib/api/games";
 import type {
-  StartedGame,
-  CompletedGame,
-  SelfInRound,
-  OtherPlayerInRound,
+  SpikeGame,
+  SpikeActiveRound,
+  SpikeActive,
+  SpikeCompletedRound,
+  Card,
+  PlayerInGame,
 } from "@/lib/api/types";
 
 interface UseGameStateOptions {
@@ -16,14 +17,8 @@ interface UseGameStateOptions {
   interval?: number;
 }
 
-function isStartedGame(game: StartedGame | CompletedGame): game is StartedGame {
-  return game.status !== "WON";
-}
-
-function isSelf(
-  player: SelfInRound | OtherPlayerInRound,
-): player is SelfInRound {
-  return "hand" in player;
+function isActiveRound(active: SpikeActive): active is SpikeActiveRound {
+  return active.status !== "WON";
 }
 
 export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
@@ -32,13 +27,13 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
 
   // pollingEnabled is derived from game state. It starts true so the initial
   // fetch fires. We use the React-recommended "adjust state during render"
-  // pattern: track the last game status we processed and update pollingEnabled
-  // synchronously when it changes, avoiding setState-in-effect.
+  // pattern: track the last game status key we processed and update
+  // pollingEnabled synchronously when it changes, avoiding setState-in-effect.
   const [pollingEnabled, setPollingEnabled] = useState(true);
-  const [lastGameStatus, setLastGameStatus] = useState<string | null>(null);
+  const [lastGameKey, setLastGameKey] = useState<string | null>(null);
 
   const fetcher = useCallback(() => {
-    return getGame(playerId, gameId);
+    return getSpikeGame(playerId, gameId);
   }, [playerId, gameId]);
 
   const {
@@ -47,33 +42,48 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
     error,
     isStale,
     refetch,
-  } = usePolling({
+  } = usePolling<SpikeGame>({
     fetcher,
     interval,
     enabled: !!playerId && pollingEnabled,
   });
 
-  const started = game && isStartedGame(game) ? game : null;
-  const completed = game?.status === "WON" ? (game as CompletedGame) : null;
-  const myTurn = started?.active_player_id === playerId;
+  // Derive active round from game.active when it is an in-progress round
+  const activeRound: SpikeActiveRound | null =
+    game && isActiveRound(game.active) ? game.active : null;
 
-  // Derive a key that captures whether polling should be active.
-  const currentKey = `${game?.status ?? "none"}:${started?.active_player_id ?? ""}`;
-  if (currentKey !== lastGameStatus) {
-    setLastGameStatus(currentKey);
-    setPollingEnabled(!myTurn && completed === null);
+  // Derive completed rounds directly from game.completed_rounds
+  const completedRounds: SpikeCompletedRound[] = game?.completed_rounds ?? [];
+
+  // Derive hand from activeRound.hands[playerId]; fall back to [] when missing
+  // or when the value is a number (opponent hand size, not card array)
+  const rawHand = activeRound?.hands[playerId];
+  const hand: Card[] = Array.isArray(rawHand) ? rawHand : [];
+
+  // Derive turn / completion. A game is complete when active status is WON.
+  const myTurn = activeRound?.active_player_id === playerId;
+  const isCompleted = !!game && game.active.status === "WON";
+  const winner: PlayerInGame | null =
+    game && !isActiveRound(game.active)
+      ? { id: game.active.winner_player_id, type: "human" }
+      : null;
+
+  // Derive phase from active round status, or null when no active round
+  const phase: SpikeActiveRound["status"] | null = activeRound?.status ?? null;
+
+  // Key that captures the polling-relevant state: active round status + active player
+  const currentKey = `${activeRound?.status ?? "none"}:${activeRound?.active_player_id ?? ""}:${isCompleted}`;
+  if (currentKey !== lastGameKey) {
+    setLastGameKey(currentKey);
+    setPollingEnabled(!myTurn && !isCompleted);
   }
-
-  const selfPlayer = started?.players.find(
-    (p): p is SelfInRound => p.id === playerId && isSelf(p),
-  );
-
-  const hand = selfPlayer?.hand ?? [];
 
   return {
     game,
-    started,
-    completed,
+    activeRound,
+    completedRounds,
+    isCompleted,
+    winner,
     loading,
     error,
     isStale,
@@ -81,6 +91,6 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
     myTurn,
     hand,
     playerId,
-    phase: started?.status ?? (completed ? "WON" : null),
+    phase,
   };
 }

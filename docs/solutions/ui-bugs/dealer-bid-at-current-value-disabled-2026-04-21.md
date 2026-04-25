@@ -37,7 +37,9 @@ No dead ends. The fix was straightforward once the game rule was identified.
 
 ## Solution
 
-**Add `isDealer` prop to `BidControlsProps` and update the component signature:**
+**Add `canMatchCurrentBid` prop to `BidControlsProps` and update the component signature:**
+
+The prop was named `isDealer` during initial implementation but renamed to `canMatchCurrentBid` per the Prevention section's guidance — the name encodes the rule, not the role.
 
 ```tsx
 // Before
@@ -46,34 +48,44 @@ interface BidControlsProps {
   disabled?: boolean;
   onBid: (amount: BidValue) => void;
 }
-export function BidControls({ currentBid, disabled, onBid }: BidControlsProps)
 
-// After
+// After (current)
 interface BidControlsProps {
   currentBid: number | null;
-  isDealer?: boolean;
+  canMatchCurrentBid?: boolean;
   disabled?: boolean;
   onBid: (amount: BidValue) => void;
 }
-export function BidControls({ currentBid, isDealer, disabled, onBid }: BidControlsProps)
 ```
 
-**Update the disabled condition in `bid-controls.tsx`:**
+**The disabled condition is extracted to a named helper in `bid-controls.tsx`:**
 
 ```tsx
-// Before
+// Before — inline ternary
 disabled={disabled || (currentBid !== null && value <= currentBid)}
 
-// After
-disabled={disabled || (currentBid !== null && (isDealer ? value < currentBid : value <= currentBid))}
+// After — extracted helper (makes the three concerns separately testable)
+function isBidValueDisabled(
+  value: BidValue,
+  currentBid: number | null,
+  canMatchCurrentBid: boolean,
+): boolean {
+  if (currentBid === null) return false;
+  return canMatchCurrentBid ? value < currentBid : value <= currentBid;
+}
+
+// ...
+disabled={disabled || isBidValueDisabled(value, currentBid, canMatchCurrentBid)}
 ```
 
 **Pass dealer identity from `game-board.tsx`:**
 
 ```tsx
+// Current call site (post-2026-04-25 OpenAPI migration)
+// bid_amount field removed; now accessed via bid?.amount
 <BidControls
-  currentBid={started.bid_amount}
-  isDealer={started.dealer_player_id === playerId}
+  currentBid={activeRound.bid?.amount ?? null}
+  canMatchCurrentBid={activeRound.dealer_player_id === playerId}
   disabled={actionInFlight}
   onBid={(amount: BidValue) => doAction({ type: "BID", amount })}
 />

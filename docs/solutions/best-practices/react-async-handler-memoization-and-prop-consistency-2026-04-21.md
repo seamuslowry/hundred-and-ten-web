@@ -56,7 +56,7 @@ interface GameBoardProps {
 }
 ```
 
-When passing these optional props down, use optional chaining at the call site: `onClick={() => onRefresh?.()}`.
+When passing these optional props down, the call site can use either a default-parameter approach on the receiving component (`onRefresh = async () => {}`) or optional chaining at the call site (`onClick={() => onRefresh?.()}`). This codebase uses the default-parameter approach in `round-header.tsx`.
 
 ### 2. Memoize async handlers with `useCallback` — and always `catch`
 
@@ -122,8 +122,7 @@ vi.mock("@/components/game/game-board", () => ({
   }) => (
     <div>
       <span data-testid="refreshing">{String(isRefreshing)}</span>
-      {/* Use a wrapper arrow — passes onClick's MouseEvent correctly */}
-      <button onClick={() => onRefresh?.()}>Refresh</button>
+      <button onClick={onRefresh}>Refresh</button>
     </div>
   ),
 }));
@@ -143,7 +142,7 @@ it("resets isRefreshing to false after refetch rejects", async () => {
 });
 ```
 
-> **Note:** Pass `onRefresh` to `onClick` via `() => onRefresh?.()`, not as `onClick={onRefresh}` directly. `onClick` expects `MouseEventHandler<HTMLButtonElement>`, and passing an `async () => Promise<void>` directly creates a type mismatch (wrong parameter list). The arrow wrapper fixes both the type and the optional-call.
+> **Note:** `onClick={onRefresh}` is used directly in production (`round-header.tsx`) because the component declares `onRefresh = async () => {}` as a default parameter, making it always a valid `() => Promise<void>`. If an optional prop has no default, use `onClick={() => onRefresh?.()}` to handle the undefined case without a type error.
 
 ### 4. Assert forwarded hook arguments with a spy-wrapping mock
 
@@ -196,7 +195,7 @@ it("forwards the configured interval to usePolling when waiting for opponent", a
 
 ## Related
 
-- `components/game/game-status-bar.tsx` — the child component whose optional interface `GameBoard` now matches
+- `components/game/round-header.tsx` — the child component whose optional interface `GameBoard` now matches (`game-status-bar.tsx` was deleted in the 2026-04-24 round-based game view migration)
 - `lib/hooks/use-game-state.ts` — hooks that forward interval to `usePolling`
 - `lib/hooks/__tests__/use-game-state.test.ts` — spy-wrapping mock example for `usePolling`
 - `routes/games/__tests__/game-page.test.tsx` — error-path test for `handleRefresh`
