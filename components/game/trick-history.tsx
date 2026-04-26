@@ -47,7 +47,7 @@ export function TrickHistory({ tricks, playerNames }: TrickHistoryProps) {
 
       {expanded && (
         <div className="mt-3 max-h-64 overflow-y-auto">
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col-reverse gap-3">
             {completedTricks.map((trick, i) => (
               <div
                 key={i}
