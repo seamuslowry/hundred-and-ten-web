@@ -22,7 +22,9 @@ function makeCompletedRound(
     status: "COMPLETED",
     dealerPlayerId: dealerId,
     trump: "SPADES",
-    bidHistory: [{ type: "BID" as const, playerId: bidderId, amount: bidAmount }],
+    bidHistory: [
+      { type: "BID" as const, playerId: bidderId, amount: bidAmount },
+    ],
     bid: { type: "BID" as const, playerId: bidderId, amount: bidAmount },
     initialHands: {},
     discards: {},
