@@ -15,7 +15,7 @@ const playerNames = new Map([
 ]);
 
 describe("DiscardArea", () => {
-  it("shows current player's discarded cards when discards[playerId] is SpikeDiscard", () => {
+  it("shows current player's discarded cards when discards[playerId] is DiscardRecord", () => {
     render(
       <DiscardArea
         discards={{
@@ -107,7 +107,7 @@ describe("DiscardArea", () => {
     expect(screen.getByText(/: 0 cards/)).toBeInTheDocument();
   });
 
-  it("shows other player's SpikeDiscard as a count", () => {
+  it("shows other player's discard count", () => {
     render(
       <DiscardArea
         discards={{

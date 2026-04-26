@@ -8,7 +8,7 @@ vi.mock("../use-auth", () => ({
 }));
 
 vi.mock("@/lib/api/games", () => ({
-  getSpikeGame: vi.fn(),
+  getGame: vi.fn(),
 }));
 
 vi.mock("../use-polling", async (importOriginal) => {
@@ -26,13 +26,13 @@ import { ApiError } from "@/lib/api/client";
 
 const mockUsePolling = vi.mocked(usePolling);
 const mockUseAuth = vi.mocked(useAuth);
-const mockGetSpikeGame = vi.mocked(getGame);
+const mockGetGame = vi.mocked(getGame);
 
 const PLAYER_ID = "player-uid-123";
 const LOBBY_ID = "lobby-abc-456";
 
-// Minimal SpikeGame response — only needs to resolve successfully
-const mockSpikeGame = {
+// Minimal Game response — only needs to resolve successfully
+const mockGame = {
   id: LOBBY_ID,
   name: "Test Game",
   players: [{ id: PLAYER_ID, type: "human" as const }],
@@ -62,9 +62,7 @@ describe("useLobbyGameStart", () => {
       signOut: vi.fn(),
       getToken: vi.fn(),
     });
-    mockGetSpikeGame.mockRejectedValue(
-      new ApiError(404, "Game not found") as never,
-    );
+    mockGetGame.mockRejectedValue(new ApiError(404, "Game not found") as never);
   });
 
   afterEach(() => {
@@ -74,8 +72,8 @@ describe("useLobbyGameStart", () => {
 
   // ─── Game start detection ──────────────────────────────────────────────────
 
-  it("returns gameStarted true when getSpikeGame resolves successfully", async () => {
-    mockGetSpikeGame.mockResolvedValue(mockSpikeGame as never);
+  it("returns gameStarted true when getGame resolves successfully", async () => {
+    mockGetGame.mockResolvedValue(mockGame as never);
 
     const { result } = renderHook(() =>
       useLobbyGameStart({ lobbyId: LOBBY_ID }),
@@ -86,13 +84,13 @@ describe("useLobbyGameStart", () => {
     });
   });
 
-  it("returns gameStarted false when getSpikeGame throws ApiError(404)", async () => {
+  it("returns gameStarted false when getGame throws ApiError(404)", async () => {
     const { result } = renderHook(() =>
       useLobbyGameStart({ lobbyId: LOBBY_ID }),
     );
 
     await waitFor(() => {
-      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
+      expect(mockGetGame).toHaveBeenCalledTimes(1);
     });
 
     expect(result.current.gameStarted).toBe(false);
@@ -101,9 +99,9 @@ describe("useLobbyGameStart", () => {
 
   // ─── Error handling ────────────────────────────────────────────────────────
 
-  it("sets error when getSpikeGame throws a non-404 error", async () => {
+  it("sets error when getGame throws a non-404 error", async () => {
     const networkError = new Error("Network failure");
-    mockGetSpikeGame.mockRejectedValue(networkError as never);
+    mockGetGame.mockRejectedValue(networkError as never);
 
     const { result } = renderHook(() =>
       useLobbyGameStart({ lobbyId: LOBBY_ID }),
@@ -116,8 +114,8 @@ describe("useLobbyGameStart", () => {
     expect(result.current.gameStarted).toBe(false);
   });
 
-  it("sets error when getSpikeGame throws ApiError with non-404 status", async () => {
-    mockGetSpikeGame.mockRejectedValue(
+  it("sets error when getGame throws ApiError with non-404 status", async () => {
+    mockGetGame.mockRejectedValue(
       new ApiError(500, "Internal Server Error") as never,
     );
 
@@ -138,7 +136,7 @@ describe("useLobbyGameStart", () => {
     renderHook(() => useLobbyGameStart({ lobbyId: LOBBY_ID }));
 
     await waitFor(() => {
-      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
+      expect(mockGetGame).toHaveBeenCalledTimes(1);
     });
 
     expect(mockUsePolling).toHaveBeenCalledWith(
@@ -150,7 +148,7 @@ describe("useLobbyGameStart", () => {
     renderHook(() => useLobbyGameStart({ lobbyId: LOBBY_ID, interval: 10000 }));
 
     await waitFor(() => {
-      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
+      expect(mockGetGame).toHaveBeenCalledTimes(1);
     });
 
     expect(mockUsePolling).toHaveBeenCalledWith(
@@ -173,7 +171,7 @@ describe("useLobbyGameStart", () => {
       await vi.advanceTimersByTimeAsync(60000);
     });
 
-    expect(mockGetSpikeGame).not.toHaveBeenCalled();
+    expect(mockGetGame).not.toHaveBeenCalled();
   });
 
   // ─── Polling continues until game detected ─────────────────────────────────
@@ -182,7 +180,7 @@ describe("useLobbyGameStart", () => {
     renderHook(() => useLobbyGameStart({ lobbyId: LOBBY_ID, interval: 5000 }));
 
     await waitFor(() => {
-      expect(mockGetSpikeGame).toHaveBeenCalledTimes(1);
+      expect(mockGetGame).toHaveBeenCalledTimes(1);
     });
 
     // 404 is treated as success by the fetcher, so no backoff — next poll at 5s
@@ -191,7 +189,7 @@ describe("useLobbyGameStart", () => {
     });
 
     await waitFor(() => {
-      expect(mockGetSpikeGame).toHaveBeenCalledTimes(2);
+      expect(mockGetGame).toHaveBeenCalledTimes(2);
     });
   });
 });

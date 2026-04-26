@@ -13,8 +13,8 @@ const playerNames = new Map([
 describe("BidHistoryPanel", () => {
   it("renders each bid with player name and amount label", () => {
     const bids: EnactedBid[] = [
-      { playerId: "player-1", amount: 15 },
-      { playerId: "player-2", amount: 20 },
+      { type: "BID", playerId: "player-1", amount: 15 },
+      { type: "BID", playerId: "player-2", amount: 20 },
     ];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Alice")).toBeInTheDocument();
@@ -24,7 +24,9 @@ describe("BidHistoryPanel", () => {
   });
 
   it("displays amount 0 as 'Pass'", () => {
-    const bids: EnactedBid[] = [{ playerId: "player-1", amount: 0 }];
+    const bids: EnactedBid[] = [
+      { type: "BID", playerId: "player-1", amount: 0 },
+    ];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Pass")).toBeInTheDocument();
   });
@@ -38,7 +40,7 @@ describe("BidHistoryPanel", () => {
 
   it("resolves player names from map with fallback to truncated ID", () => {
     const bids: EnactedBid[] = [
-      { playerId: "unknown-player-id-xyz", amount: 15 },
+      { type: "BID", playerId: "unknown-player-id-xyz", amount: 15 },
     ];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     // Falls back to first 8 chars of ID
@@ -46,31 +48,41 @@ describe("BidHistoryPanel", () => {
   });
 
   it("displays 15 as 'Fifteen'", () => {
-    const bids: EnactedBid[] = [{ playerId: "player-1", amount: 15 }];
+    const bids: EnactedBid[] = [
+      { type: "BID", playerId: "player-1", amount: 15 },
+    ];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Fifteen")).toBeInTheDocument();
   });
 
   it("displays 20 as 'Twenty'", () => {
-    const bids: EnactedBid[] = [{ playerId: "player-1", amount: 20 }];
+    const bids: EnactedBid[] = [
+      { type: "BID", playerId: "player-1", amount: 20 },
+    ];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Twenty")).toBeInTheDocument();
   });
 
   it("displays 25 as 'Twenty Five'", () => {
-    const bids: EnactedBid[] = [{ playerId: "player-1", amount: 25 }];
+    const bids: EnactedBid[] = [
+      { type: "BID", playerId: "player-1", amount: 25 },
+    ];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Twenty Five")).toBeInTheDocument();
   });
 
   it("displays 30 as 'Thirty'", () => {
-    const bids: EnactedBid[] = [{ playerId: "player-1", amount: 30 }];
+    const bids: EnactedBid[] = [
+      { type: "BID", playerId: "player-1", amount: 30 },
+    ];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Thirty")).toBeInTheDocument();
   });
 
   it("displays 60 as 'Shoot the Moon'", () => {
-    const bids: EnactedBid[] = [{ playerId: "player-1", amount: 60 }];
+    const bids: EnactedBid[] = [
+      { type: "BID", playerId: "player-1", amount: 60 },
+    ];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Shoot the Moon")).toBeInTheDocument();
   });

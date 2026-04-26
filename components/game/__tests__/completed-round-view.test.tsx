@@ -19,10 +19,10 @@ const completedRound: CompletedWithBidderRound = {
   dealerPlayerId: "player-1",
   trump: "HEARTS",
   bidHistory: [
-    { playerId: "player-1", amount: 0 },
-    { playerId: "player-2", amount: 20 },
+    { type: "BID" as const, playerId: "player-1", amount: 0 },
+    { type: "BID" as const, playerId: "player-2", amount: 20 },
   ],
-  bid: { playerId: "player-2", amount: 20 },
+  bid: { type: "BID" as const, playerId: "player-2", amount: 20 },
   initialHands: {
     "player-1": [{ number: "ACE", suit: "HEARTS" }],
     "player-2": [{ number: "KING", suit: "SPADES" }],
