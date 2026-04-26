@@ -1,7 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 import type { RootState } from "@/store";
+import { isActiveRound } from "@/lib/api/types";
 import type { ActiveRound, Card, CompletedRound } from "@/lib/api/types";
-import { isActiveRound } from "./slice";
 
 // ─── Base selector ──────────────────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ export function selectMyTurn(
  *   - the hand value is a number (opponent hand size sentinel)
  *   - the hand entry is missing
  *
- * Preserves the Array.isArray check from lib/hooks/use-game-state.ts:60-61.
+ * Preserves the Array.isArray check used in the original useGameState hook.
  */
 export const selectMyHand = createSelector(
   [

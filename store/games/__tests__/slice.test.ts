@@ -1,6 +1,15 @@
-import { describe, it, expect } from "vitest";
-import gamesReducer, { gameLoaded } from "../slice";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { configureStore } from "@reduxjs/toolkit";
+import gamesReducer from "../slice";
 import type { GamesState } from "../slice";
+
+vi.mock("@/lib/api/games", () => ({
+  getGame: vi.fn(),
+  performAction: vi.fn(),
+}));
+
+import { getGame } from "@/lib/api/games";
+const mockGetGame = vi.mocked(getGame);
 import {
   selectGameById,
   selectActiveRound,
@@ -81,6 +90,7 @@ function makeState(gamesState: Partial<GamesState> = {}): RootState {
   const games: GamesState = {
     byId: {},
     loading: {},
+    actionInFlight: {},
     errors: {},
     ...gamesState,
   };
@@ -95,41 +105,53 @@ function stateWithGame(game: Game, extra: Partial<GamesState> = {}): RootState {
 // ─── Reducer tests ───────────────────────────────────────────────────────────
 
 describe("gamesSlice reducer", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("initializes to empty state", () => {
     const state = gamesReducer(undefined, { type: "@@INIT" });
-    expect(state).toEqual({ byId: {}, loading: {}, errors: {} });
-  });
-
-  it("gameLoaded populates byId[gameId] and clears errors[gameId]", () => {
-    // Start with a pre-existing error for this game
-    const initial = gamesReducer(
-      { byId: {}, loading: {}, errors: { [GAME_ID]: "network error" } },
-      { type: "@@INIT" },
-    );
-    // Dispatch gameLoaded
-    const next = gamesReducer(
-      initial,
-      gameLoaded({ gameId: GAME_ID, game: mockGame }),
-    );
-
-    expect(next.byId[GAME_ID]).toEqual(mockGame);
-    expect(next.errors[GAME_ID]).toBeNull();
-  });
-
-  it("gameLoaded does not affect other games in byId", () => {
-    const otherGame: Game = { ...mockGame, id: "other-game-id" };
-    const initial: GamesState = {
-      byId: { "other-game-id": otherGame },
+    expect(state).toEqual({
+      byId: {},
       loading: {},
+      actionInFlight: {},
       errors: {},
-    };
-    const next = gamesReducer(
-      initial,
-      gameLoaded({ gameId: GAME_ID, game: mockGame }),
+    });
+  });
+
+  it("fetchGame.fulfilled populates byId[gameId] and clears errors[gameId]", async () => {
+    // fetchGame.fulfilled is the single write path (gameLoaded was removed)
+    mockGetGame.mockResolvedValue(mockGame);
+    const store = configureStore({ reducer: { games: gamesReducer } });
+
+    // Pre-seed an error so we can verify it gets cleared
+    const { fetchGame } = await import("../thunks");
+    mockGetGame.mockRejectedValueOnce(new Error("network error"));
+    await store.dispatch(fetchGame({ playerId: PLAYER_ID, gameId: GAME_ID }));
+    expect(store.getState().games.errors[GAME_ID]).toBe("network error");
+
+    // Now a successful fetch should clear the error
+    mockGetGame.mockResolvedValueOnce(mockGame);
+    await store.dispatch(fetchGame({ playerId: PLAYER_ID, gameId: GAME_ID }));
+
+    expect(store.getState().games.byId[GAME_ID]).toEqual(mockGame);
+    expect(store.getState().games.errors[GAME_ID]).toBeNull();
+  });
+
+  it("fetchGame.fulfilled does not affect other games in byId", async () => {
+    const { fetchGame } = await import("../thunks");
+    const otherGame: Game = { ...mockGame, id: "other-game-id" };
+    mockGetGame.mockResolvedValueOnce(otherGame);
+    const store = configureStore({ reducer: { games: gamesReducer } });
+    await store.dispatch(
+      fetchGame({ playerId: PLAYER_ID, gameId: "other-game-id" }),
     );
 
-    expect(next.byId["other-game-id"]).toEqual(otherGame);
-    expect(next.byId[GAME_ID]).toEqual(mockGame);
+    mockGetGame.mockResolvedValueOnce(mockGame);
+    await store.dispatch(fetchGame({ playerId: PLAYER_ID, gameId: GAME_ID }));
+
+    expect(store.getState().games.byId["other-game-id"]).toEqual(otherGame);
+    expect(store.getState().games.byId[GAME_ID]).toEqual(mockGame);
   });
 });
 

@@ -1,43 +1,29 @@
 import { createSlice } from "@reduxjs/toolkit";
-import type { PayloadAction } from "@reduxjs/toolkit";
-import { fetchGame } from "./thunks";
-import type { Game, ActiveGameState, ActiveRound } from "@/lib/api/types";
-
-// Private type guard — mirrors lib/hooks/use-game-state.ts:20-22
-function isActiveRound(active: ActiveGameState): active is ActiveRound {
-  return active.status !== "WON";
-}
-// Re-export for use in selectors file (same module boundary)
-export { isActiveRound };
+import { fetchGame, performGameAction } from "./thunks";
+import type { Game } from "@/lib/api/types";
 
 export interface GamesState {
   byId: Record<string, Game>;
   loading: Record<string, boolean>;
+  /** Tracks in-flight performGameAction calls per gameId. Used by condition() for dedup. */
+  actionInFlight: Record<string, boolean>;
   errors: Record<string, string | null>;
 }
 
 const initialState: GamesState = {
   byId: {},
   loading: {},
+  actionInFlight: {},
   errors: {},
 };
 
 export const gamesSlice = createSlice({
   name: "games",
   initialState,
-  reducers: {
-    /**
-     * Written on successful fetches only (via fetchGame.fulfilled in U2).
-     * Clears the error for that gameId because a fresh snapshot arrived.
-     */
-    gameLoaded(state, action: PayloadAction<{ gameId: string; game: Game }>) {
-      const { gameId, game } = action.payload;
-      state.byId[gameId] = game;
-      state.errors[gameId] = null;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
+      // fetchGame lifecycle
       .addCase(fetchGame.pending, (state, action) => {
         state.loading[action.meta.arg.gameId] = true;
       })
@@ -51,9 +37,18 @@ export const gamesSlice = createSlice({
         const gameId = action.meta.arg.gameId;
         state.errors[gameId] = action.error.message ?? "Unknown error";
         state.loading[gameId] = false;
+      })
+      // performGameAction lifecycle — tracks in-flight action for dedup
+      .addCase(performGameAction.pending, (state, action) => {
+        state.actionInFlight[action.meta.arg.gameId] = true;
+      })
+      .addCase(performGameAction.fulfilled, (state, action) => {
+        state.actionInFlight[action.meta.arg.gameId] = false;
+      })
+      .addCase(performGameAction.rejected, (state, action) => {
+        state.actionInFlight[action.meta.arg.gameId] = false;
       });
   },
 });
 
-export const { gameLoaded } = gamesSlice.actions;
 export default gamesSlice.reducer;

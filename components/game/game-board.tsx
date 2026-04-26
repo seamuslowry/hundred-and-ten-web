@@ -60,6 +60,15 @@ export function GameBoard({
     try {
       await dispatch(performGameAction({ playerId, gameId, action })).unwrap();
     } catch (e) {
+      // condition() cancellation: RTK throws {name:'ConditionError'} — not a user error.
+      // This fires when a second action is dispatched while one is already in-flight.
+      if (
+        e != null &&
+        typeof e === "object" &&
+        (e as { name?: string }).name === "ConditionError"
+      ) {
+        return;
+      }
       // rejectWithValue throws the payload directly (may be string, not Error)
       setActionError(
         e instanceof Error

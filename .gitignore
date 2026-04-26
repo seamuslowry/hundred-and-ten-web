@@ -47,3 +47,6 @@ next-env.d.ts
 
 # OpenTofu
 .terraform
+
+# Compound Engineering Code Review
+.context/compound-engineering/ce-code-review

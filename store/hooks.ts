@@ -1,4 +1,8 @@
-import { useDispatch, useSelector } from "react-redux";
+import {
+  useDispatch,
+  useSelector,
+  type TypedUseSelectorHook,
+} from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
 
 /**
@@ -10,6 +14,7 @@ export const useAppDispatch = () => useDispatch<AppDispatch>();
 /**
  * Typed version of useSelector — use this throughout the app instead of
  * the plain useSelector hook so the RootState type is inferred correctly.
+ * Uses RTK's TypedUseSelectorHook to preserve all useSelector overloads
+ * (including the optional equality function parameter).
  */
-export const useAppSelector = <T>(selector: (state: RootState) => T): T =>
-  useSelector(selector);
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

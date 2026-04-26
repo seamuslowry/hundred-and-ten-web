@@ -12,6 +12,7 @@
 - `app/` — page-level components (game-page, lobby-detail) and `globals.css`
 - `components/` for shared UI components
 - `lib/` for API client, hooks, and utilities
+- `store/` — Redux Toolkit store; `store/index.ts` (configureStore), `store/hooks.ts` (typed hooks), `store/games/` (slice, selectors, thunks); PR 2 adds `store/lobbies/`
 - `main.tsx` at repo root — app entry point
 - `index.html` at repo root — HTML shell
 - `docs/solutions/` — documented solutions to past problems, organized by category with YAML frontmatter (`module`, `tags`, `problem_type`)

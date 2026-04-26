@@ -26,6 +26,12 @@ export function useGamePolling({
   const isCompleted = useAppSelector(
     (s) => s.games.byId[gameId]?.active.status === "WON",
   );
+  // Re-enable polling when there's a fetch error even on my turn.
+  // After action + failed re-fetch, the snapshot is stale (myTurn still true
+  // in the old game state) — polling must resume to recover.
+  const hasError = useAppSelector(
+    (s) => (s.games.errors[gameId] ?? null) !== null,
+  );
   const dispatch = useAppDispatch();
 
   const fetcher = useCallback(
@@ -36,7 +42,7 @@ export function useGamePolling({
   const { refetch } = usePolling({
     fetcher,
     interval,
-    enabled: !!playerId && !myTurn && !isCompleted,
+    enabled: !!playerId && (!myTurn || hasError) && !isCompleted,
   });
 
   return { refetch };

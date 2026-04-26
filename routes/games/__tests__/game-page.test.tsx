@@ -258,6 +258,7 @@ function renderWithStore(
           games: {
             byId: {},
             loading: {},
+            actionInFlight: {},
             errors: {},
             ...initialGames,
           },

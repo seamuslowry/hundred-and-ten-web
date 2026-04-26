@@ -123,6 +123,18 @@ export interface WonInformation {
   winnerPlayerId: string;
 }
 
+// ─── Type guards ─────────────────────────────────────────────────────────────
+
+/** Returns true when the active game state is an in-progress round (not WON). */
+export function isActiveRound(active: ActiveGameState): active is ActiveRound {
+  return active.status !== "WON";
+}
+
+/** Returns true when the active game state represents a won game. */
+export function isWonGame(active: ActiveGameState): active is WonInformation {
+  return active.status === "WON";
+}
+
 export type CompletedRound = CompletedWithBidderRound | CompletedNoBiddersRound;
 
 export interface CompletedWithBidderRound {

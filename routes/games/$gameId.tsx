@@ -13,7 +13,7 @@ import {
   selectMyTurn,
   selectMyHand,
 } from "@/store/games/selectors";
-import type { WonInformation } from "@/lib/api/types";
+import { isWonGame } from "@/lib/api/types";
 import { getGamePlayers } from "@/lib/api/games";
 import { useParams, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
@@ -44,11 +44,8 @@ function GameContent() {
   const errorMsg = useAppSelector((s) => s.games.errors[gameId] ?? null);
   const isCompleted = game?.active.status === "WON";
   const winner =
-    isCompleted && game
-      ? {
-          id: (game.active as WonInformation).winnerPlayerId,
-          type: "human" as const,
-        }
+    game && isWonGame(game.active)
+      ? { id: game.active.winnerPlayerId, type: "human" as const }
       : null;
   const phase = activeRound?.status ?? null;
   const isStale = errorMsg !== null && game !== undefined;
@@ -81,7 +78,7 @@ function GameContent() {
     }
   }, [refetch]);
 
-  if (loading) {
+  if (loading && !game) {
     return (
       <main className="mx-auto max-w-2xl p-4">
         <p className="text-gray-500">Loading game...</p>
