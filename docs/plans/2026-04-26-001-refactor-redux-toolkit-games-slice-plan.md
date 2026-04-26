@@ -1,7 +1,7 @@
 ---
 title: "refactor: Migrate game state to Redux Toolkit (PR 1 of 3)"
 type: refactor
-status: active
+status: completed
 date: 2026-04-26
 deepened: 2026-04-26
 origin: docs/brainstorms/state-management-redux-toolkit-requirements.md
