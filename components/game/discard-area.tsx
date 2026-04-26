@@ -1,8 +1,8 @@
-import type { SpikeDiscard } from "@/lib/api/types";
+import type { DiscardRecord } from "@/lib/api/types";
 import { Card } from "./card";
 
 interface DiscardAreaProps {
-  discards: Record<string, SpikeDiscard | number>;
+  discards: Record<string, DiscardRecord | number>;
   playerId: string;
   playerNames: Map<string, string>;
 }

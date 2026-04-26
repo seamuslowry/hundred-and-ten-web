@@ -20,12 +20,12 @@ vi.mock("../use-polling", async (importOriginal) => {
 });
 
 import { useAuth } from "../use-auth";
-import { getSpikeGame } from "@/lib/api/games";
+import { getGame } from "@/lib/api/games";
 import { usePolling } from "../use-polling";
 
 const mockUsePolling = vi.mocked(usePolling);
 const mockUseAuth = vi.mocked(useAuth);
-const mockGetSpikeGame = vi.mocked(getSpikeGame);
+const mockGetSpikeGame = vi.mocked(getGame);
 
 const PLAYER_ID = "player-uid-123";
 const OTHER_PLAYER_ID = "other-player";

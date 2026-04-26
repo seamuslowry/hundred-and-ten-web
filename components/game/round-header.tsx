@@ -1,11 +1,11 @@
 import { SUIT_SYMBOL } from "./card-labels";
 import { BID_LABEL } from "./bid-labels";
-import type { BidValue, SpikeBid } from "@/lib/api/types";
+import type { BidValue, Bid } from "@/lib/api/types";
 
 interface RoundHeaderProps {
   phase: string;
   dealerPlayerId: string;
-  bid: SpikeBid | null;
+  bid: Bid | null;
   trump: string | null;
   activePlayerId: string;
   playerId: string;

@@ -1,8 +1,8 @@
-import type { SpikeBid, BidValue } from "@/lib/api/types";
+import type { Bid, BidValue } from "@/lib/api/types";
 import { BID_LABEL } from "./bid-labels";
 
 interface BidHistoryPanelProps {
-  bidHistory: SpikeBid[];
+  bidHistory: Bid[];
   playerNames: Map<string, string>;
 }
 

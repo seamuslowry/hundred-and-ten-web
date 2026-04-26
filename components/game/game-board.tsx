@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type {
-  SpikeActiveRound,
+  ActiveRound,
   PlayerInGame,
   Card as CardType,
   GameAction,
@@ -21,7 +21,7 @@ import { TrickHistory } from "./trick-history";
 
 interface GameBoardProps {
   gameId: string;
-  activeRound: SpikeActiveRound | null;
+  activeRound: ActiveRound | null;
   isCompleted: boolean;
   winner: PlayerInGame | null;
   hand: CardType[];

@@ -20,13 +20,13 @@ vi.mock("../use-polling", async (importOriginal) => {
 });
 
 import { useAuth } from "../use-auth";
-import { getSpikeGame } from "@/lib/api/games";
+import { getGame } from "@/lib/api/games";
 import { usePolling } from "../use-polling";
 import { ApiError } from "@/lib/api/client";
 
 const mockUsePolling = vi.mocked(usePolling);
 const mockUseAuth = vi.mocked(useAuth);
-const mockGetSpikeGame = vi.mocked(getSpikeGame);
+const mockGetSpikeGame = vi.mocked(getGame);
 
 const PLAYER_ID = "player-uid-123";
 const LOBBY_ID = "lobby-abc-456";
