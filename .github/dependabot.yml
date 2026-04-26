@@ -17,6 +17,10 @@ updates:
           - "react-dom"
           - "@types/react"
           - "@types/react-dom"
+      vite-suite:
+        patterns:
+          - "vite"
+          - "@vitejs/plugin-react"
       non-major-development-dependencies:
         dependency-type: "development"
         update-types:
