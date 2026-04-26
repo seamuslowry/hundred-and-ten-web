@@ -78,64 +78,60 @@ export interface ApiEvent {
   [key: string]: unknown;
 }
 
-// Spike endpoint types — round-based game response
-
-export interface SpikeBid {
+export interface Bid {
   player_id: string;
   amount: number;
 }
 
-export interface SpikeDiscard {
+export interface DiscardRecord {
   discarded: Card[];
   received: Card[];
 }
 
-export interface SpikeGame {
+export interface Game {
   id: string;
   name: string;
   players: PlayerInGame[];
   scores: Record<string, number>;
-  active: SpikeActive;
-  completed_rounds: SpikeCompletedRound[];
+  active: ActiveGameState;
+  completed_rounds: CompletedRound[];
 }
 
-export type SpikeActive = SpikeActiveRound | SpikeWonInformation;
+export type ActiveGameState = ActiveRound | WonInformation;
 
-export interface SpikeWonInformation {
+export interface WonInformation {
   status: "WON";
   winner_player_id: string;
 }
 
-export type SpikeCompletedRound =
-  | SpikeCompletedWithBidderRound
-  | SpikeCompletedNoBiddersRound;
+export type CompletedRound = CompletedWithBidderRound | CompletedNoBiddersRound;
 
-export interface SpikeCompletedWithBidderRound {
+export interface CompletedWithBidderRound {
   status: "COMPLETED";
   dealer_player_id: string;
   trump: SelectableSuit;
-  bid_history: SpikeBid[];
-  bid: SpikeBid | null;
+  bid_history: Bid[];
+  bid: Bid | null;
   initial_hands: Record<string, Card[]>;
-  discards: Record<string, SpikeDiscard>;
+  discards: Record<string, DiscardRecord>;
   tricks: Trick[];
   scores: Record<string, number>;
 }
 
-export interface SpikeCompletedNoBiddersRound {
+export interface CompletedNoBiddersRound {
   status: "COMPLETED_NO_BIDDERS";
   dealer_player_id: string;
   initial_hands: Record<string, Card[]>;
 }
 
-export interface SpikeActiveRound {
+export interface ActiveRound {
   status: "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS";
   dealer_player_id: string;
-  bid_history: SpikeBid[];
-  bid: SpikeBid | null;
+  bid_history: Bid[];
+  bid: Bid | null;
   hands: Record<string, Card[] | number>;
   trump: SelectableSuit | null;
-  discards: Record<string, SpikeDiscard | number>;
+  discards: Record<string, DiscardRecord | number>;
   tricks: Trick[];
   active_player_id: string;
   queued_actions: unknown[];
