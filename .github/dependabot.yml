@@ -10,6 +10,8 @@ updates:
     schedule:
       interval: "weekly"
     versioning-strategy: "increase"
+    ignore:
+      - dependency-name: "@types/node"
     groups:
       react-suite:
         patterns:
