@@ -25,7 +25,7 @@ export function BidHistoryPanel({
         {bidHistory.map((bid, i) => (
           <li key={i} className="text-sm text-gray-700 dark:text-gray-200">
             <span className="font-medium">
-              {displayName(bid.player_id, playerNames)}
+              {displayName(bid.playerId, playerNames)}
             </span>
             {": "}
             <span>

@@ -73,13 +73,13 @@ export function CompletedRoundView({
           Round {roundIndex + 1}
         </span>
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          Dealer: {displayName(round.dealer_player_id, playerNames)}
+          Dealer: {displayName(round.dealerPlayerId, playerNames)}
         </span>
         {isCompleted && completedRound ? (
           <span className="text-sm text-gray-500 dark:text-gray-400">
             Bidder:{" "}
             {completedRound.bid
-              ? `${displayName(completedRound.bid.player_id, playerNames)} @ ${completedRound.bid.amount}`
+              ? `${displayName(completedRound.bid.playerId, playerNames)} @ ${completedRound.bid.amount}`
               : "(none)"}
           </span>
         ) : (
@@ -122,7 +122,7 @@ export function CompletedRoundView({
 
               {/* Bid history */}
               <BidHistoryPanel
-                bidHistory={completedRound.bid_history}
+                bidHistory={completedRound.bidHistory}
                 playerNames={playerNames}
               />
 
@@ -132,7 +132,7 @@ export function CompletedRoundView({
                   Initial Hands
                 </p>
                 <div className="flex flex-col gap-2">
-                  {Object.entries(completedRound.initial_hands).map(
+                  {Object.entries(completedRound.initialHands).map(
                     ([playerId, cards]) => (
                       <div key={playerId} className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -187,11 +187,11 @@ export function CompletedRoundView({
                         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                           Trick {i + 1}
                         </span>
-                        {trick.winning_play && (
+                        {trick.winningPlay && (
                           <span className="text-xs text-gray-400 dark:text-gray-500">
                             Won by{" "}
                             {displayName(
-                              trick.winning_play.player_id,
+                              trick.winningPlay.playerId,
                               playerNames,
                             )}
                           </span>
@@ -205,10 +205,10 @@ export function CompletedRoundView({
                       <div className="flex gap-2 overflow-x-auto pb-1">
                         {trick.plays.map((play) => {
                           const isWinning =
-                            trick.winning_play?.player_id === play.player_id;
+                            trick.winningPlay?.playerId === play.playerId;
                           return (
                             <div
-                              key={`${play.player_id}-${play.card.number}-${play.card.suit}`}
+                              key={`${play.playerId}-${play.card.number}-${play.card.suit}`}
                               className={`flex min-w-[50px] flex-col items-center rounded-lg border-2 p-1.5 ${
                                 isWinning
                                   ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-900"
@@ -216,7 +216,7 @@ export function CompletedRoundView({
                               }`}
                             >
                               <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {displayName(play.player_id, playerNames)}
+                                {displayName(play.playerId, playerNames)}
                               </span>
                               <span
                                 className={`text-base font-bold ${cardTextColor(play.card)}`}
@@ -268,7 +268,7 @@ export function CompletedRoundView({
                 </p>
                 <div className="flex flex-col gap-2">
                   {Object.entries(
-                    (round as CompletedNoBiddersRound).initial_hands,
+                    (round as CompletedNoBiddersRound).initialHands,
                   ).map(([playerId, cards]) => (
                     <div key={playerId} className="flex flex-col gap-1">
                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300">

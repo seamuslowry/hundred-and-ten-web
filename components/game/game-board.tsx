@@ -96,10 +96,10 @@ export function GameBoard({
     <div className="flex flex-col gap-4">
       <RoundHeader
         phase={phase}
-        dealerPlayerId={activeRound.dealer_player_id}
+        dealerPlayerId={activeRound.dealerPlayerId}
         bid={activeRound.bid}
         trump={activeRound.trump}
-        activePlayerId={activeRound.active_player_id}
+        activePlayerId={activeRound.activePlayerId}
         playerId={playerId}
         playerNames={playerNames}
         onRefresh={onRefresh}
@@ -116,7 +116,7 @@ export function GameBoard({
       {phase === "BIDDING" && myTurn && (
         <BidControls
           currentBid={activeRound.bid?.amount ?? null}
-          canMatchCurrentBid={activeRound.dealer_player_id === playerId}
+          canMatchCurrentBid={activeRound.dealerPlayerId === playerId}
           disabled={actionInFlight}
           onBid={(amount: BidValue) => doAction({ type: "BID", amount })}
         />
@@ -163,9 +163,9 @@ export function GameBoard({
         !(phase === "DISCARD" && myTurn) &&
         !(phase === "TRICKS" && myTurn) && <Hand cards={hand} />}
 
-      {activeRound.bid_history.length > 0 && (
+      {activeRound.bidHistory.length > 0 && (
         <BidHistoryPanel
-          bidHistory={activeRound.bid_history}
+          bidHistory={activeRound.bidHistory}
           playerNames={playerNames}
         />
       )}

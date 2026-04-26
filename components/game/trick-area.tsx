@@ -36,7 +36,7 @@ export function TrickArea({ tricks, playerNames }: TrickAreaProps) {
       <div className="flex gap-3 overflow-x-auto pb-1">
         {currentTrick.plays.map((play) => {
           const isWinning =
-            currentTrick.winning_play?.player_id === play.player_id;
+            currentTrick.winningPlay?.playerId === play.playerId;
           const isRed =
             play.card.suit === "HEARTS" || play.card.suit === "DIAMONDS";
           const textColor =
@@ -48,7 +48,7 @@ export function TrickArea({ tricks, playerNames }: TrickAreaProps) {
 
           return (
             <div
-              key={`${play.player_id}-${play.card.number}-${play.card.suit}`}
+              key={`${play.playerId}-${play.card.number}-${play.card.suit}`}
               className={`flex min-w-[56px] flex-col items-center rounded-lg border-2 p-2 ${
                 isWinning
                   ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-900"
@@ -56,7 +56,7 @@ export function TrickArea({ tricks, playerNames }: TrickAreaProps) {
               }`}
             >
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {displayName(play.player_id)}
+                {displayName(play.playerId)}
               </span>
               <span className={`text-lg font-bold ${textColor}`}>
                 {cardLabel(play.card)}

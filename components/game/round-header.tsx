@@ -95,7 +95,7 @@ export function RoundHeader({
             Bidder:{" "}
             {bid != null ? (
               <span className="font-medium text-gray-700 dark:text-gray-200">
-                {displayName(bid.player_id, playerNames)} @{" "}
+                {displayName(bid.playerId, playerNames)} @{" "}
                 {BID_LABEL[bid.amount as BidValue] ?? String(bid.amount)}
               </span>
             ) : (

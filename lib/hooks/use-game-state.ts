@@ -53,7 +53,7 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
     game && isActiveRound(game.active) ? game.active : null;
 
   // Derive completed rounds directly from game.completed_rounds
-  const completedRounds: CompletedRound[] = game?.completed_rounds ?? [];
+  const completedRounds: CompletedRound[] = game?.completedRounds ?? [];
 
   // Derive hand from activeRound.hands[playerId]; fall back to [] when missing
   // or when the value is a number (opponent hand size, not card array)
@@ -61,18 +61,18 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
   const hand: Card[] = Array.isArray(rawHand) ? rawHand : [];
 
   // Derive turn / completion. A game is complete when active status is WON.
-  const myTurn = activeRound?.active_player_id === playerId;
+  const myTurn = activeRound?.activePlayerId === playerId;
   const isCompleted = !!game && game.active.status === "WON";
   const winner: PlayerInGame | null =
     game && !isActiveRound(game.active)
-      ? { id: game.active.winner_player_id, type: "human" }
+      ? { id: game.active.winnerPlayerId, type: "human" }
       : null;
 
   // Derive phase from active round status, or null when no active round
   const phase: ActiveRound["status"] | null = activeRound?.status ?? null;
 
   // Key that captures the polling-relevant state: active round status + active player
-  const currentKey = `${activeRound?.status ?? "none"}:${activeRound?.active_player_id ?? ""}:${isCompleted}`;
+  const currentKey = `${activeRound?.status ?? "none"}:${activeRound?.activePlayerId ?? ""}:${isCompleted}`;
   if (currentKey !== lastGameKey) {
     setLastGameKey(currentKey);
     setPollingEnabled(!myTurn && !isCompleted);

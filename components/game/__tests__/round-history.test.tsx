@@ -20,11 +20,11 @@ function makeCompletedRound(
 ): CompletedWithBidderRound {
   return {
     status: "COMPLETED",
-    dealer_player_id: dealerId,
+    dealerPlayerId: dealerId,
     trump: "SPADES",
-    bid_history: [{ player_id: bidderId, amount: bidAmount }],
-    bid: { player_id: bidderId, amount: bidAmount },
-    initial_hands: {},
+    bidHistory: [{ playerId: bidderId, amount: bidAmount }],
+    bid: { playerId: bidderId, amount: bidAmount },
+    initialHands: {},
     discards: {},
     tricks: [],
     scores: { [bidderId]: bidAmount },
@@ -34,8 +34,8 @@ function makeCompletedRound(
 function makeNoBidderRound(dealerId: string): CompletedNoBiddersRound {
   return {
     status: "COMPLETED_NO_BIDDERS",
-    dealer_player_id: dealerId,
-    initial_hands: {},
+    dealerPlayerId: dealerId,
+    initialHands: {},
   };
 }
 
