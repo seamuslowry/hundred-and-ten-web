@@ -13,8 +13,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@tanstack/react-router": "^1.168.23",
-    "firebase": "^12.12.0",
+    "@tanstack/react-router": "^1.168.24",
+    "firebase": "^12.12.1",
     "react": "19.2.5",
     "react-dom": "19.2.5"
   },
