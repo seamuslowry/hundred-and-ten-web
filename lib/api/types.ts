@@ -56,6 +56,18 @@ export interface EnactedBid {
   amount: number;
 }
 
+export interface EnactedDiscard {
+  type: "DISCARD";
+  playerId: string;
+  cards: Card[];
+}
+
+export interface EnactedSelectTrump {
+  type: "SELECT_TRUMP";
+  playerId: string;
+  suit: SelectableSuit;
+}
+
 export interface EnactedPlay {
   type: "PLAY";
   playerId: string;
@@ -81,7 +93,13 @@ export interface SearchRequest {
 }
 
 export interface ApiEvent {
-  [key: string]: unknown;
+  sequence: number;
+  content:
+    | EnactedBid
+    | EnactedDiscard
+    | EnactedPlay
+    | EnactedSelectTrump
+    | unknown;
 }
 
 export interface DiscardRecord {

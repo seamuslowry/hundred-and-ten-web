@@ -32,7 +32,7 @@ This work switches the game page to the new round-based API and rebuilds the UI 
   - Bidder and bid amount (when known; "(pending)" during bidding before a winner is determined)
   - Active player ("Player N's Turn")
   - Trump suit (once selected)
-- R7. **Bid history panel**: During and after bidding, show the sequence of bids in the current round (e.g., "Player 1: Pass", "Player 2: Fifteen", "Player 3: Twenty Five"). Source: `bid_history[]` on the active round.
+- R7. **Bid history panel**: During and after bidding, show the sequence of bids in the current round (e.g., "Player 1: Pass", "Player 2: Fifteen", "Player 3: Twenty Five"). Source: `bidHistory[]` on the active round.
 - R8. **Hand display**: Show the current player's hand (cards). Show other players' hands as card counts (e.g., "Player 2 Hand: 4 cards"). Source: `hands` map on the active round (cards for self, integer for others).
 - R9. **Discards section**: During and after discarding, show the current player's discarded cards. Show other players' discard counts. Source: `discards` map on the active round.
 - R10. **Tricks display**: During the Tricks phase, show the current trick with played cards and the winning play, plus completed tricks. Source: `tricks[]` on the active round.
@@ -102,7 +102,7 @@ This work switches the game page to the new round-based API and rebuilds the UI 
 ### Deferred to Planning
 
 - [Affects R8-R9] Determine how hand and discard displays adapt at different screen sizes -- particularly whether other players' hands/discards are collapsed on mobile.
-- [Affects R11] Confirm whether bid controls need minimum bid validation changes given the richer `bid_history[]` data now available.
+- [Affects R11] Confirm whether bid controls need minimum bid validation changes given the richer `bidHistory[]` data now available.
 - [Affects R12-R14] Determine the animation/transition for expanding/collapsing past rounds.
 - [Affects R3] Audit which views (if any) still reference `StartedGame` before removing the type.
 
