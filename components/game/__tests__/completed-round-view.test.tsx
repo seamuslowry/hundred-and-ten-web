@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CompletedRoundView } from "../completed-round-view";
 import type {
-  SpikeCompletedWithBidderRound,
-  SpikeCompletedNoBiddersRound,
+  CompletedWithBidderRound,
+  CompletedNoBiddersRound,
 } from "@/lib/api/types";
 
 vi.mock("@/lib/firebase", () => ({ auth: {} }));
@@ -14,7 +14,7 @@ const playerNames = new Map([
   ["player-3", "Carol"],
 ]);
 
-const completedRound: SpikeCompletedWithBidderRound = {
+const completedRound: CompletedWithBidderRound = {
   status: "COMPLETED",
   dealer_player_id: "player-1",
   trump: "HEARTS",
@@ -77,7 +77,7 @@ const completedRound: SpikeCompletedWithBidderRound = {
   },
 };
 
-const noBidderRound: SpikeCompletedNoBiddersRound = {
+const noBidderRound: CompletedNoBiddersRound = {
   status: "COMPLETED_NO_BIDDERS",
   dealer_player_id: "player-1",
   initial_hands: {

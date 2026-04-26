@@ -9,11 +9,11 @@ vi.mock("../client", () => ({
 }));
 
 import { apiFetch } from "../client";
-import { getSpikeGame } from "../games";
+import { getGame } from "../games";
 
 const mockApiFetch = vi.mocked(apiFetch);
 
-describe("getSpikeGame", () => {
+describe("getGame", () => {
   beforeEach(() => {
     vi.stubEnv("VITE_API_URL", "https://api.example.com");
   });
@@ -23,18 +23,18 @@ describe("getSpikeGame", () => {
     vi.restoreAllMocks();
   });
 
-  it("calls apiFetch with the correct spike endpoint path", async () => {
+  it("calls apiFetch with the correct endpoint path", async () => {
     mockApiFetch.mockResolvedValue({} as never);
 
-    await getSpikeGame("player-123", "game-456");
+    await getGame("player-123", "game-456");
 
     expect(mockApiFetch).toHaveBeenCalledWith(
-      "/players/player-123/games/game-456/spike",
+      "/players/player-123/games/game-456",
     );
   });
 
-  it("returns the SpikeGame response from apiFetch", async () => {
-    const mockSpikeGame = {
+  it("returns the Game response from apiFetch", async () => {
+    const mockGame = {
       id: "game-456",
       name: "Test Game",
       status: "BIDDING",
@@ -43,10 +43,10 @@ describe("getSpikeGame", () => {
       scores: {},
       rounds: [],
     };
-    mockApiFetch.mockResolvedValue(mockSpikeGame as never);
+    mockApiFetch.mockResolvedValue(mockGame as never);
 
-    const result = await getSpikeGame("player-123", "game-456");
+    const result = await getGame("player-123", "game-456");
 
-    expect(result).toEqual(mockSpikeGame);
+    expect(result).toEqual(mockGame);
   });
 });

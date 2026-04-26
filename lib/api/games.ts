@@ -1,11 +1,5 @@
 import { apiFetch } from "./client";
-import type {
-  GameAction,
-  Suggestion,
-  Player,
-  ApiEvent,
-  SpikeGame,
-} from "./types";
+import type { GameAction, Suggestion, Player, ApiEvent, Game } from "./types";
 
 export function performAction(
   playerId: string,
@@ -32,9 +26,6 @@ export function getGamePlayers(
   return apiFetch(`/players/${playerId}/games/${gameId}/players`);
 }
 
-export function getSpikeGame(
-  playerId: string,
-  gameId: string,
-): Promise<SpikeGame> {
-  return apiFetch(`/players/${playerId}/games/${gameId}/spike`);
+export function getGame(playerId: string, gameId: string): Promise<Game> {
+  return apiFetch(`/players/${playerId}/games/${gameId}`);
 }

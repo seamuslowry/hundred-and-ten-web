@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { usePolling } from "./use-polling";
 import { useAuth } from "./use-auth";
-import { getSpikeGame } from "@/lib/api/games";
+import { getGame } from "@/lib/api/games";
 import { ApiError } from "@/lib/api/client";
 
 interface UseLobbyGameStartOptions {
@@ -25,7 +25,7 @@ export function useLobbyGameStart({
 
   const fetcher = useCallback(async (): Promise<GameStartResult> => {
     try {
-      await getSpikeGame(playerId, lobbyId);
+      await getGame(playerId, lobbyId);
       return { started: true };
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) {

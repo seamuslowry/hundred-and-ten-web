@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RoundHistory } from "../round-history";
 import type {
-  SpikeCompletedWithBidderRound,
-  SpikeCompletedNoBiddersRound,
+  CompletedWithBidderRound,
+  CompletedNoBiddersRound,
 } from "@/lib/api/types";
 
 vi.mock("@/lib/firebase", () => ({ auth: {} }));
@@ -17,7 +17,7 @@ function makeCompletedRound(
   dealerId: string,
   bidderId: string,
   bidAmount: number,
-): SpikeCompletedWithBidderRound {
+): CompletedWithBidderRound {
   return {
     status: "COMPLETED",
     dealer_player_id: dealerId,
@@ -31,7 +31,7 @@ function makeCompletedRound(
   };
 }
 
-function makeNoBidderRound(dealerId: string): SpikeCompletedNoBiddersRound {
+function makeNoBidderRound(dealerId: string): CompletedNoBiddersRound {
   return {
     status: "COMPLETED_NO_BIDDERS",
     dealer_player_id: dealerId,

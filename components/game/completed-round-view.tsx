@@ -1,13 +1,13 @@
 import type {
-  SpikeCompletedWithBidderRound,
-  SpikeCompletedNoBiddersRound,
+  CompletedWithBidderRound,
+  CompletedNoBiddersRound,
   Card as CardType,
 } from "@/lib/api/types";
 import { SUIT_SYMBOL, NUMBER_LABEL } from "./card-labels";
 import { BidHistoryPanel } from "./bid-history-panel";
 
 interface CompletedRoundViewProps {
-  round: SpikeCompletedWithBidderRound | SpikeCompletedNoBiddersRound;
+  round: CompletedWithBidderRound | CompletedNoBiddersRound;
   roundIndex: number;
   expanded: boolean;
   onToggle: () => void;
@@ -56,7 +56,7 @@ export function CompletedRoundView({
 }: CompletedRoundViewProps) {
   const isCompleted = round.status === "COMPLETED";
   const completedRound = isCompleted
-    ? (round as SpikeCompletedWithBidderRound)
+    ? (round as CompletedWithBidderRound)
     : null;
 
   return (
@@ -268,7 +268,7 @@ export function CompletedRoundView({
                 </p>
                 <div className="flex flex-col gap-2">
                   {Object.entries(
-                    (round as SpikeCompletedNoBiddersRound).initial_hands,
+                    (round as CompletedNoBiddersRound).initial_hands,
                   ).map(([playerId, cards]) => (
                     <div key={playerId} className="flex flex-col gap-1">
                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300">

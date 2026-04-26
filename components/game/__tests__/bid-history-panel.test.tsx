@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { BidHistoryPanel } from "../bid-history-panel";
-import type { SpikeBid } from "@/lib/api/types";
+import type { Bid } from "@/lib/api/types";
 
 vi.mock("@/lib/firebase", () => ({ auth: {} }));
 
@@ -12,7 +12,7 @@ const playerNames = new Map([
 
 describe("BidHistoryPanel", () => {
   it("renders each bid with player name and amount label", () => {
-    const bids: SpikeBid[] = [
+    const bids: Bid[] = [
       { player_id: "player-1", amount: 15 },
       { player_id: "player-2", amount: 20 },
     ];
@@ -24,7 +24,7 @@ describe("BidHistoryPanel", () => {
   });
 
   it("displays amount 0 as 'Pass'", () => {
-    const bids: SpikeBid[] = [{ player_id: "player-1", amount: 0 }];
+    const bids: Bid[] = [{ player_id: "player-1", amount: 0 }];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Pass")).toBeInTheDocument();
   });
@@ -37,40 +37,38 @@ describe("BidHistoryPanel", () => {
   });
 
   it("resolves player names from map with fallback to truncated ID", () => {
-    const bids: SpikeBid[] = [
-      { player_id: "unknown-player-id-xyz", amount: 15 },
-    ];
+    const bids: Bid[] = [{ player_id: "unknown-player-id-xyz", amount: 15 }];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     // Falls back to first 8 chars of ID
     expect(screen.getByText("unknown-")).toBeInTheDocument();
   });
 
   it("displays 15 as 'Fifteen'", () => {
-    const bids: SpikeBid[] = [{ player_id: "player-1", amount: 15 }];
+    const bids: Bid[] = [{ player_id: "player-1", amount: 15 }];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Fifteen")).toBeInTheDocument();
   });
 
   it("displays 20 as 'Twenty'", () => {
-    const bids: SpikeBid[] = [{ player_id: "player-1", amount: 20 }];
+    const bids: Bid[] = [{ player_id: "player-1", amount: 20 }];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Twenty")).toBeInTheDocument();
   });
 
   it("displays 25 as 'Twenty Five'", () => {
-    const bids: SpikeBid[] = [{ player_id: "player-1", amount: 25 }];
+    const bids: Bid[] = [{ player_id: "player-1", amount: 25 }];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Twenty Five")).toBeInTheDocument();
   });
 
   it("displays 30 as 'Thirty'", () => {
-    const bids: SpikeBid[] = [{ player_id: "player-1", amount: 30 }];
+    const bids: Bid[] = [{ player_id: "player-1", amount: 30 }];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Thirty")).toBeInTheDocument();
   });
 
   it("displays 60 as 'Shoot the Moon'", () => {
-    const bids: SpikeBid[] = [{ player_id: "player-1", amount: 60 }];
+    const bids: Bid[] = [{ player_id: "player-1", amount: 60 }];
     render(<BidHistoryPanel bidHistory={bids} playerNames={playerNames} />);
     expect(screen.getByText("Shoot the Moon")).toBeInTheDocument();
   });

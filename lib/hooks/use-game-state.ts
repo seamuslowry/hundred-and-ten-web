@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
 import { usePolling } from "./use-polling";
 import { useAuth } from "./use-auth";
-import { getSpikeGame } from "@/lib/api/games";
+import { getGame } from "@/lib/api/games";
 import type {
-  SpikeGame,
-  SpikeActiveRound,
-  SpikeActive,
-  SpikeCompletedRound,
+  Game,
+  ActiveRound,
+  ActiveGameState,
+  CompletedRound,
   Card,
   PlayerInGame,
 } from "@/lib/api/types";
@@ -17,7 +17,7 @@ interface UseGameStateOptions {
   interval?: number;
 }
 
-function isActiveRound(active: SpikeActive): active is SpikeActiveRound {
+function isActiveRound(active: ActiveGameState): active is ActiveRound {
   return active.status !== "WON";
 }
 
@@ -33,7 +33,7 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
   const [lastGameKey, setLastGameKey] = useState<string | null>(null);
 
   const fetcher = useCallback(() => {
-    return getSpikeGame(playerId, gameId);
+    return getGame(playerId, gameId);
   }, [playerId, gameId]);
 
   const {
@@ -42,18 +42,18 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
     error,
     isStale,
     refetch,
-  } = usePolling<SpikeGame>({
+  } = usePolling<Game>({
     fetcher,
     interval,
     enabled: !!playerId && pollingEnabled,
   });
 
   // Derive active round from game.active when it is an in-progress round
-  const activeRound: SpikeActiveRound | null =
+  const activeRound: ActiveRound | null =
     game && isActiveRound(game.active) ? game.active : null;
 
   // Derive completed rounds directly from game.completed_rounds
-  const completedRounds: SpikeCompletedRound[] = game?.completed_rounds ?? [];
+  const completedRounds: CompletedRound[] = game?.completed_rounds ?? [];
 
   // Derive hand from activeRound.hands[playerId]; fall back to [] when missing
   // or when the value is a number (opponent hand size, not card array)
@@ -69,7 +69,7 @@ export function useGameState({ gameId, interval = 3000 }: UseGameStateOptions) {
       : null;
 
   // Derive phase from active round status, or null when no active round
-  const phase: SpikeActiveRound["status"] | null = activeRound?.status ?? null;
+  const phase: ActiveRound["status"] | null = activeRound?.status ?? null;
 
   // Key that captures the polling-relevant state: active round status + active player
   const currentKey = `${activeRound?.status ?? "none"}:${activeRound?.active_player_id ?? ""}:${isCompleted}`;
