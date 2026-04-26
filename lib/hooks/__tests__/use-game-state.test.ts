@@ -38,7 +38,7 @@ const MY_HAND = [{ number: "ACE" as const, suit: "SPADES" as const }];
 const mockActiveRound = {
   status: "BIDDING" as const,
   dealer_player_id: OTHER_PLAYER_ID,
-  bid_history: [],
+  bidHistory: [],
   bid: null,
   hands: { [PLAYER_ID]: MY_HAND, [OTHER_PLAYER_ID]: 5 },
   discards: {},
@@ -65,7 +65,7 @@ const mockCompletedRound = {
   status: "COMPLETED" as const,
   dealer_player_id: OTHER_PLAYER_ID,
   trump: "SPADES" as const,
-  bid_history: [],
+  bidHistory: [],
   bid: { player_id: OTHER_PLAYER_ID, amount: 20 },
   initial_hands: { [PLAYER_ID]: MY_HAND, [OTHER_PLAYER_ID]: MY_HAND },
   discards: {},

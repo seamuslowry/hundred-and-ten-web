@@ -1,8 +1,8 @@
-import type { Bid, BidValue } from "@/lib/api/types";
+import type { EnactedBid, BidValue } from "@/lib/api/types";
 import { BID_LABEL } from "./bid-labels";
 
 interface BidHistoryPanelProps {
-  bidHistory: Bid[];
+  bidHistory: EnactedBid[];
   playerNames: Map<string, string>;
 }
 

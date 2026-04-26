@@ -46,11 +46,17 @@ export interface Lobby {
 
 export interface Trick {
   bleeding: boolean;
-  plays: IdentifiedPlay[];
-  winningPlay: IdentifiedPlay | null;
+  plays: EnactedPlay[];
+  winningPlay: EnactedPlay | null;
 }
 
-export interface IdentifiedPlay {
+export interface EnactedBid {
+  type: "BID";
+  playerId: string;
+  amount: number;
+}
+
+export interface EnactedPlay {
   type: "PLAY";
   playerId: string;
   card: Card;
@@ -76,11 +82,6 @@ export interface SearchRequest {
 
 export interface ApiEvent {
   [key: string]: unknown;
-}
-
-export interface Bid {
-  playerId: string;
-  amount: number;
 }
 
 export interface DiscardRecord {
@@ -110,8 +111,8 @@ export interface CompletedWithBidderRound {
   status: "COMPLETED";
   dealerPlayerId: string;
   trump: SelectableSuit;
-  bidHistory: Bid[];
-  bid: Bid | null;
+  bidHistory: EnactedBid[];
+  bid: EnactedBid | null;
   initialHands: Record<string, Card[]>;
   discards: Record<string, DiscardRecord>;
   tricks: Trick[];
@@ -127,8 +128,8 @@ export interface CompletedNoBiddersRound {
 export interface ActiveRound {
   status: "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS";
   dealerPlayerId: string;
-  bidHistory: Bid[];
-  bid: Bid | null;
+  bidHistory: EnactedBid[];
+  bid: EnactedBid | null;
   hands: Record<string, Card[] | number>;
   trump: SelectableSuit | null;
   discards: Record<string, DiscardRecord | number>;

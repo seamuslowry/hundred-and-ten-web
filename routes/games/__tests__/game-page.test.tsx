@@ -73,7 +73,7 @@ const baseState = {
     active: {
       status: "BIDDING" as const,
       dealer_player_id: "player-1",
-      bid_history: [],
+      bidHistory: [],
       bid: null,
       hands: {},
       discards: {},
@@ -87,7 +87,7 @@ const baseState = {
   activeRound: {
     status: "BIDDING" as const,
     dealer_player_id: "player-1",
-    bid_history: [],
+    bidHistory: [],
     bid: null,
     hands: {},
     discards: {},
