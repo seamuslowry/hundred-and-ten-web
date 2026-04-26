@@ -168,7 +168,7 @@ getSpikeGame() → usePolling → useGameState
   │     ├── .status → phase controls + RoundHeader
   │     ├── .hands[playerId] → Hand (self cards)
   │     ├── .hands (others) → OtherPlayersHands
-  │     ├── .bid_history → BidHistoryPanel
+  │     ├── .bidHistory → BidHistoryPanel
   │     ├── .discards → DiscardArea
   │     ├── .tricks → TrickArea + TrickHistory
   │     └── .bid_amount, .dealer_player_id, etc → RoundHeader

@@ -71,7 +71,7 @@ interface SpikeCompletedRound {
   bidder_player_id: string;
   bid_amount: number;
   trump: SelectableSuit;
-  bid_history: SpikeBid[];
+  bidHistory: SpikeBid[];
   hands: Record<string, Card[]>;
   discards: Record<string, Card[]>;
   tricks: Trick[];
@@ -81,7 +81,7 @@ interface SpikeCompletedRound {
 interface SpikeActiveRound {
   status: "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS";
   dealer_player_id: string;
-  bid_history: SpikeBid[];
+  bidHistory: SpikeBid[];
   hands: Record<string, Card[] | number>;
   discards: Record<string, Card[] | number>;
   bidder_player_id: string | null;
@@ -127,7 +127,7 @@ interface SpikeCompletedWithBidderRound {
   status: "COMPLETED";
   dealer_player_id: string;
   trump: SelectableSuit;
-  bid_history: SpikeBid[];
+  bidHistory: SpikeBid[];
   bid: SpikeBid | null;                         // replaces bidder_player_id + bid_amount
   initial_hands: Record<string, Card[]>;        // replaces hands
   discards: Record<string, SpikeDiscard>;       // replaces Record<string, Card[]>
@@ -138,7 +138,7 @@ interface SpikeCompletedWithBidderRound {
 interface SpikeActiveRound {
   status: "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS";
   dealer_player_id: string;
-  bid_history: SpikeBid[];
+  bidHistory: SpikeBid[];
   bid: SpikeBid | null;                         // replaces bidder_player_id + bid_amount
   hands: Record<string, Card[] | number>;
   trump: SelectableSuit | null;

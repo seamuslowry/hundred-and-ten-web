@@ -40,7 +40,7 @@ const mockSpikeGame = {
   active: {
     status: "BIDDING" as const,
     dealer_player_id: PLAYER_ID,
-    bid_history: [],
+    bidHistory: [],
     bid: null,
     hands: { [PLAYER_ID]: [] },
     discards: {},
