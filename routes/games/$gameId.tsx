@@ -3,7 +3,17 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { GameBoard } from "@/components/game/game-board";
 import { ScoreBoard } from "@/components/game/score-board";
 import { RoundHistory } from "@/components/game/round-history";
-import { useGameState } from "@/lib/hooks/use-game-state";
+import { useGamePolling } from "@/lib/hooks/use-game-polling";
+import { useAuth } from "@/lib/hooks/use-auth";
+import { useAppSelector } from "@/store/hooks";
+import {
+  selectGameById,
+  selectActiveRound,
+  selectCompletedRounds,
+  selectMyTurn,
+  selectMyHand,
+} from "@/store/games/selectors";
+import { isWonGame } from "@/lib/api/types";
 import { getGamePlayers } from "@/lib/api/games";
 import { useParams, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
@@ -14,22 +24,33 @@ export const Route = createFileRoute("/games/$gameId")({
 
 function GameContent() {
   const { gameId } = useParams({ from: "/games/$gameId" });
-  const {
-    game,
-    activeRound,
-    completedRounds,
-    isCompleted,
-    winner,
-    loading,
-    error,
-    isStale,
-    myTurn,
-    hand,
-    playerId,
-    phase,
-    refetch,
-  } = useGameState({ gameId, interval: 3000 });
+  const { user } = useAuth();
+  const playerId = user?.uid ?? "";
 
+  // Polling controller
+  const { refetch } = useGamePolling({ gameId, interval: 3000 });
+
+  // Game state from selectors
+  const game = useAppSelector((s) => selectGameById(s, gameId));
+  const activeRound = useAppSelector((s) => selectActiveRound(s, gameId));
+  const completedRounds = useAppSelector((s) =>
+    selectCompletedRounds(s, gameId),
+  );
+  const myTurn = useAppSelector((s) => selectMyTurn(s, gameId, playerId));
+  const hand = useAppSelector((s) => selectMyHand(s, gameId, playerId));
+
+  // Inline single-consumer derivations (NOT exported selectors):
+  const loading = useAppSelector((s) => s.games.loading[gameId] ?? false);
+  const errorMsg = useAppSelector((s) => s.games.errors[gameId] ?? null);
+  const isCompleted = game?.active.status === "WON";
+  const winner =
+    game && isWonGame(game.active)
+      ? { id: game.active.winnerPlayerId, type: "human" as const }
+      : null;
+  const phase = activeRound?.status ?? null;
+  const isStale = errorMsg !== null && game !== undefined;
+
+  // Keep these as local useState:
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [playerNames, setPlayerNames] = useState<Map<string, string>>(
     new Map(),
@@ -57,7 +78,7 @@ function GameContent() {
     }
   }, [refetch]);
 
-  if (loading) {
+  if (loading && !game) {
     return (
       <main className="mx-auto max-w-2xl p-4">
         <p className="text-gray-500">Loading game...</p>
@@ -65,10 +86,10 @@ function GameContent() {
     );
   }
 
-  if (error && !game) {
+  if (errorMsg && !game) {
     return (
       <main className="mx-auto max-w-2xl p-4">
-        <p className="text-red-600">Failed to load game: {error.message}</p>
+        <p className="text-red-600">Failed to load game: {errorMsg}</p>
       </main>
     );
   }
@@ -109,7 +130,6 @@ function GameContent() {
           myTurn={myTurn}
           isStale={isStale}
           playerId={playerId}
-          onActionComplete={refetch}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
         />

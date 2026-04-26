@@ -7,7 +7,8 @@ import type {
   BidValue,
   SelectableSuit,
 } from "@/lib/api/types";
-import { performAction } from "@/lib/api/games";
+import { useAppDispatch } from "@/store/hooks";
+import { performGameAction } from "@/store/games/thunks";
 import { RoundHeader } from "./round-header";
 import { BidHistoryPanel } from "./bid-history-panel";
 import { DiscardArea } from "./discard-area";
@@ -30,7 +31,6 @@ interface GameBoardProps {
   myTurn: boolean;
   isStale: boolean;
   playerId: string;
-  onActionComplete: () => Promise<void>;
   onRefresh?: () => Promise<void>;
   isRefreshing?: boolean;
 }
@@ -46,10 +46,10 @@ export function GameBoard({
   myTurn,
   isStale,
   playerId,
-  onActionComplete,
   onRefresh,
   isRefreshing,
 }: GameBoardProps) {
+  const dispatch = useAppDispatch();
   const [actionInFlight, setActionInFlight] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -58,10 +58,25 @@ export function GameBoard({
     setActionInFlight(true);
     setActionError(null);
     try {
-      await performAction(playerId, gameId, action);
-      await onActionComplete();
+      await dispatch(performGameAction({ playerId, gameId, action })).unwrap();
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Action failed");
+      // condition() cancellation: RTK throws {name:'ConditionError'} — not a user error.
+      // This fires when a second action is dispatched while one is already in-flight.
+      if (
+        e != null &&
+        typeof e === "object" &&
+        (e as { name?: string }).name === "ConditionError"
+      ) {
+        return;
+      }
+      // rejectWithValue throws the payload directly (may be string, not Error)
+      setActionError(
+        e instanceof Error
+          ? e.message
+          : typeof e === "string"
+            ? e
+            : "Action failed",
+      );
     } finally {
       setActionInFlight(false);
     }
