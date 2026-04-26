@@ -85,7 +85,7 @@ disabled={disabled || isBidValueDisabled(value, currentBid, canMatchCurrentBid)}
 // bid_amount field removed; now accessed via bid?.amount
 <BidControls
   currentBid={activeRound.bid?.amount ?? null}
-  canMatchCurrentBid={activeRound.dealer_player_id === playerId}
+  canMatchCurrentBid={activeRound.dealerPlayerId === playerId}
   disabled={actionInFlight}
   onBid={(amount: BidValue) => doAction({ type: "BID", amount })}
 />
@@ -98,7 +98,7 @@ The dealer-takes-bid rule requires a different threshold than the strict "must o
 ## Prevention
 
 - When implementing bid or action controls, cross-reference game rules for role-specific exceptions (dealer privileges, trump caller rights, etc.) before coding disabled conditions
-- Encode player role as an explicit prop rather than deriving it inline in JSX; compute `const isDealer = started.dealer_player_id != null && started.dealer_player_id === playerId` before the return to make null-safety intent visible
+- Encode player role as an explicit prop rather than deriving it inline in JSX; compute `const isDealer = started.dealerPlayerId != null && started.dealerPlayerId === playerId` before the return to make null-safety intent visible
 - Consider naming props for the _rule_ rather than the _role_ (e.g., `canMatchCurrentBid`) to make the intent of disabled logic self-documenting at the call site
 - Extract bid-floor logic into a named helper (`isBidValueDisabled(value, currentBid, canMatchCurrentBid)`) to make the three concerns (flight guard, null check, bid-floor) separately testable
 - Add a test for the dealer-at-current-bid case; the conditional `isDealer ? value < currentBid : value <= currentBid` is easy to accidentally flatten in a refactor

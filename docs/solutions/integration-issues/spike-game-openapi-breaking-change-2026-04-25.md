@@ -95,57 +95,58 @@ interface SpikeActiveRound {
 
 **After:**
 ```ts
-interface SpikeBid {
-  player_id: string;
+interface EnactedBid {
+  type: "BID";
+  playerId: string;
   amount: number;
 }
 
-interface SpikeDiscard {
+interface DiscardRecord {
   discarded: Card[];
   received: Card[];   // cards dealt to the player to replace their discards
 }
 
-interface SpikeGame {
+interface Game {
   id: string;
   name: string;
   players: PlayerInGame[];
   scores: Record<string, number>;
-  active: SpikeActive;              // replaces status + winner + rounds searching
-  completed_rounds: SpikeCompletedRound[];
+  active: ActiveGameState;              // replaces status + winner + rounds searching
+  completedRounds: CompletedRound[];
 }
 
-type SpikeActive = SpikeActiveRound | SpikeWonInformation;
+type ActiveGameState = ActiveRound | WonInformation;
 
-interface SpikeWonInformation {
+interface WonInformation {
   status: "WON";
-  winner_player_id: string;
+  winnerPlayerId: string;
 }
 
-type SpikeCompletedRound = SpikeCompletedWithBidderRound | SpikeCompletedNoBiddersRound;
+type CompletedRound = CompletedWithBidderRound | CompletedNoBiddersRound;
 
-interface SpikeCompletedWithBidderRound {
+interface CompletedWithBidderRound {
   status: "COMPLETED";
-  dealer_player_id: string;
+  dealerPlayerId: string;
   trump: SelectableSuit;
-  bidHistory: SpikeBid[];
-  bid: SpikeBid | null;                         // replaces bidder_player_id + bid_amount
-  initial_hands: Record<string, Card[]>;        // replaces hands
-  discards: Record<string, SpikeDiscard>;       // replaces Record<string, Card[]>
+  bidHistory: EnactedBid[];
+  bid: EnactedBid | null;                       // replaces bidder_player_id + bid_amount
+  initialHands: Record<string, Card[]>;         // replaces hands
+  discards: Record<string, DiscardRecord>;      // replaces Record<string, Card[]>
   tricks: Trick[];
   scores: Record<string, number>;
 }
 
-interface SpikeActiveRound {
+interface ActiveRound {
   status: "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS";
-  dealer_player_id: string;
-  bidHistory: SpikeBid[];
-  bid: SpikeBid | null;                         // replaces bidder_player_id + bid_amount
+  dealerPlayerId: string;
+  bidHistory: EnactedBid[];
+  bid: EnactedBid | null;                       // replaces bidder_player_id + bid_amount
   hands: Record<string, Card[] | number>;
   trump: SelectableSuit | null;
-  discards: Record<string, SpikeDiscard | number>; // object replaces bare Card[]
+  discards: Record<string, DiscardRecord | number>; // object replaces bare Card[]
   tricks: Trick[];
-  active_player_id: string;
-  queued_actions: unknown[];
+  activePlayerId: string;
+  queuedActions: unknown[];
 }
 ```
 
@@ -163,25 +164,25 @@ const winner = game?.winner ?? null;
 
 **After:**
 ```ts
-function isActiveRound(active: SpikeActive): active is SpikeActiveRound {
+function isActiveRound(active: ActiveGameState): active is ActiveRound {
   return active.status !== "WON";
 }
 
-const activeRound: SpikeActiveRound | null =
+const activeRound: ActiveRound | null =
   game && isActiveRound(game.active) ? game.active : null;
 
-const completedRounds: SpikeCompletedRound[] = game?.completed_rounds ?? [];
+const completedRounds: CompletedRound[] = game?.completedRounds ?? [];
 
 const isCompleted = !!game && game.active.status === "WON";
 
 // winner is synthesized — backend no longer returns a full PlayerInGame
 const winner: PlayerInGame | null =
   game && !isActiveRound(game.active)
-    ? { id: game.active.winner_player_id, type: "human" }
+    ? { id: game.active.winnerPlayerId, type: "human" }
     : null;
 ```
 
-The old code had a defensive fallback: `isCompleted` was true if `winner` was non-null OR if rounds existed but none were active (guarding against `winner: null` in WON status). The new code trusts `active.status === "WON"` as the single source of truth and reconstructs `PlayerInGame` from `winner_player_id`. (session history)
+The old code had a defensive fallback: `isCompleted` was true if `winner` was non-null OR if rounds existed but none were active (guarding against `winner: null` in WON status). The new code trusts `active.status === "WON"` as the single source of truth and reconstructs `PlayerInGame` from `winnerPlayerId`. (session history)
 
 ### 3. Consolidate bid props in `round-header.tsx`
 
@@ -197,7 +198,7 @@ interface RoundHeaderProps {
 **After:**
 ```tsx
 interface RoundHeaderProps {
-  bid: SpikeBid | null;
+  bid: EnactedBid | null;
   // ...
 }
 
@@ -213,7 +214,7 @@ currentBid={activeRound.bid?.amount ?? null}
 
 ### 4. Update `discard-area.tsx` — handle `SpikeDiscard` object and show received cards
 
-The type guard changed because the API moved from a bare `Card[]` to a structured `SpikeDiscard` object for own discards. `Array.isArray` no longer matches. The replacement uses `typeof value === "object" && value !== null` — the null check matters because `typeof null === "object"` in JavaScript, and a missing player entry in the map would otherwise cause `value.discarded` to throw at runtime. A named predicate (`isSpikeDiscard`) keeps the guard explicit, null-safe, and reusable.
+The type guard changed because the API moved from a bare `Card[]` to a structured `DiscardRecord` object for own discards. `Array.isArray` no longer matches. The replacement uses an inline `typeof value === "object"` check — this is safe because discard map values from `Object.entries()` are always either `DiscardRecord` or `number`, never `null`.
 
 **Before:**
 ```tsx
@@ -227,12 +228,7 @@ const count = Array.isArray(value) ? value.length : value;
 
 **After:**
 ```tsx
-// Named predicate — null check is required: typeof null === "object" in JS
-function isSpikeDiscard(v: SpikeDiscard | number): v is SpikeDiscard {
-  return typeof v === "object" && v !== null;
-}
-
-if (pid === playerId && isSpikeDiscard(value)) {
+if (pid === playerId && typeof value === "object") {
   return (
     <div>
       {value.discarded.map((card, i) => <Card key={i} card={card} disabled />)}
@@ -244,8 +240,7 @@ if (pid === playerId && isSpikeDiscard(value)) {
     </div>
   );
 }
-// value is now narrowed to number
-const count = isSpikeDiscard(value) ? value.discarded.length : value;
+const count = typeof value === "number" ? value : value.discarded.length;
 ```
 
 ### 5. Update `completed-round-view.tsx`
@@ -254,8 +249,8 @@ Three field renames in the completed round view:
 
 | Before | After |
 |---|---|
-| `round.hands` | `round.initial_hands` |
-| `round.bidder_player_id` | `round.bid?.player_id` |
+| `round.hands` | `round.initialHands` |
+| `round.bidder_player_id` | `round.bid?.playerId` |
 | `round.bid_amount` | `round.bid?.amount` |
 
 Discard iteration:
@@ -265,7 +260,7 @@ Discard iteration:
   <CardList cards={cards} />
 ))}
 
-// After — value is SpikeDiscard; show both discarded and replacement cards
+// After — value is DiscardRecord; show both discarded and replacement cards
 {Object.entries(round.discards).map(([pid, discard]) => (
   <div key={pid}>
     <CardList cards={discard.discarded} />
@@ -300,30 +295,30 @@ const mockCompletedRound = {
 };
 
 // After
-const mockGame: SpikeGame = {
-  active: mockActiveRound,         // { status: "WON", winner_player_id: "p1" } when complete
-  completed_rounds: [mockCompletedRound],
+const mockGame: Game = {
+  active: mockActiveRound,         // { status: "WON", winnerPlayerId: "p1" } when complete
+  completedRounds: [mockCompletedRound],
   // no status, no winner, no rounds
 };
 
-const mockCompletedRound: SpikeCompletedWithBidderRound = {
-  initial_hands: { player1: [aceOfSpades] },
-  bid: { player_id: "player1", amount: 20 },
+const mockCompletedRound: CompletedWithBidderRound = {
+  initialHands: { player1: [aceOfSpades] },
+  bid: { type: "BID", playerId: "player1", amount: 20 },
   discards: { player1: { discarded: [twoOfClubs], received: [threeOfHearts] } },
 };
 
 // round-header tests
 // Before: render(<RoundHeader bidderPlayerId="p1" bidAmount={20} />)
-// After:  render(<RoundHeader bid={{ player_id: "p1", amount: 20 }} />)
+// After:  render(<RoundHeader bid={{ type: "BID", playerId: "p1", amount: 20 }} />)
 ```
 
 ## Why This Works
 
 The backend moved from a single polymorphic `rounds` array (where active vs. completed was inferred by scanning statuses) to an explicit separation: `active` is a discriminated union holding exactly the current state, and `completed_rounds` is a plain list of finished rounds. Consumers no longer need to search and filter — the server does that work.
 
-The `SpikeWonInformation` terminal state in the `active` discriminated union is the key structural change: game completion is now signalled by the `active` field itself rather than by a separate `winner` field on the game root. A single type guard (`isActiveRound`) is sufficient to branch all downstream logic correctly. Note that `isActiveRound` uses a negative check (`active.status !== "WON"`) — this is correct while `SpikeActive` has exactly two members, but if a second terminal state is added (e.g., `"ABANDONED"`), the guard would silently misclassify it as `SpikeActiveRound`. If the union grows, update the guard to a positive check against the active status literals.
+The `WonInformation` terminal state in the `active` discriminated union is the key structural change: game completion is now signalled by the `active` field itself rather than by a separate `winner` field on the game root. A single type guard (`isActiveRound`) is sufficient to branch all downstream logic correctly. Note that `isActiveRound` uses a negative check (`active.status !== "WON"`) — this is correct while `ActiveGameState` has exactly two members, but if a second terminal state is added (e.g., `"ABANDONED"`), the guard would silently misclassify it as `ActiveRound`. If the union grows, update the guard to a positive check against the active status literals.
 
-The `SpikeDiscard` object replaced a bare `Card[]` to expose the replacement cards alongside the discarded ones. The old `Array.isArray` guard was structurally wrong for the new shape and silently rendered nothing — switching to a named predicate (`isSpikeDiscard`) restores correct behavior and enables showing both card arrays.
+The `DiscardRecord` object replaced a bare `Card[]` to expose the replacement cards alongside the discarded ones. The old `Array.isArray` guard was structurally wrong for the new shape and silently rendered nothing — switching to a `typeof value === "object"` check restores correct behavior and enables showing both card arrays.
 
 ## Prevention
 
@@ -337,10 +332,10 @@ The dependency graph is strict. Making changes in this order means the compiler 
 When an API uses a `status` discriminator, write one named type guard per branch and use it everywhere. Avoid ad-hoc inline checks (`=== "WON"` scattered across components) — they're hard to find during a migration.
 
 **4. Audit type guards when the underlying collection type changes.**
-`Array.isArray` and `typeof x === "number"` are structural assumptions about the wire format. When the API changes a field from `Card[]` to `SpikeDiscard`, guards that worked before silently fail — the branch is never entered. When reviewing a spec diff, explicitly find every type guard touching changed fields.
+`Array.isArray` and `typeof x === "number"` are structural assumptions about the wire format. When the API changes a field from `Card[]` to `DiscardRecord`, guards that worked before silently fail — the branch is never entered. When reviewing a spec diff, explicitly find every type guard touching changed fields.
 
 **5. Type test fixtures against the interface, not `any`.**
-If fixtures are typed (`const mock: SpikeGame = ...`), a field rename immediately produces a fixture compile error. Untyped or `as any` fixtures pass the compiler and hide regressions until runtime.
+If fixtures are typed (`const mock: Game = ...`), a field rename immediately produces a fixture compile error. Untyped or `as any` fixtures pass the compiler and hide regressions until runtime.
 
 **6. Migration checklist for future spec changes:**
 - [ ] Diff the OpenAPI spec (fetch `/openapi.json` and compare to current types)

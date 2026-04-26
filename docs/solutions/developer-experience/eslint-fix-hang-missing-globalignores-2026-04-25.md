@@ -1,7 +1,7 @@
 ---
 title: ESLint hangs indefinitely when non-source directories are missing from globalIgnores
 date: 2026-04-25
-category: docs/solutions/developer-experience
+category: developer-experience
 module: tooling
 problem_type: developer_experience
 component: tooling

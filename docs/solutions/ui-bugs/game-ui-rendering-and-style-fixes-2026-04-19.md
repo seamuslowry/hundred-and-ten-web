@@ -82,12 +82,12 @@ CSS `:hover` is not suppressed by the HTML `disabled` attribute on non-form elem
 // Before
 className={`... hover:border-gray-400 ...`}
 
-// After — gate hover/cursor on the disabled prop
-const interactionClasses = disabled
-  ? 'cursor-not-allowed opacity-60'
-  : 'hover:border-gray-400 hover:shadow-md cursor-pointer';
-
-className={`... ${interactionClasses}`}
+// After — gate hover/cursor on the disabled prop via inline ternary
+className={`... ${
+  disabled
+    ? ""
+    : " hover:border-gray-400 dark:hover:border-gray-400"
+} ${disabled && !selected ? "opacity-50" : "cursor-pointer"}`}
 ```
 
 ---
@@ -111,7 +111,7 @@ className={`... ${interactionClasses}`}
 
 `bidder_player_id` is set once after bidding and retained for the life of the round, so it is non-null exactly when it should be displayed.
 
-**Note (2026-04-25):** `game-status-bar.tsx` was deleted in the round-based game view migration. The bidder display moved to `components/game/round-header.tsx`. The API field also changed: `bidder_player_id: string | null` was replaced by `bid: SpikeBid | null` (a `{ player_id, amount }` object). `round-header.tsx` applies the same nullability principle: `{(bid != null || phase === "BIDDING") && ...}`. See `docs/solutions/integration-issues/spike-game-openapi-breaking-change-2026-04-25.md` for the full field migration.
+**Note (2026-04-25):** `game-status-bar.tsx` was deleted in the round-based game view migration. The bidder display moved to `components/game/round-header.tsx`. The API field also changed: `bidder_player_id: string | null` was replaced by `bid: EnactedBid | null` (a `{ type: "BID", playerId, amount }` object). `round-header.tsx` applies the same nullability principle: `{(bid != null || phase === "BIDDING") && ...}`. See `docs/solutions/integration-issues/spike-game-openapi-breaking-change-2026-04-25.md` for the full field migration.
 
 ## Prevention
 
