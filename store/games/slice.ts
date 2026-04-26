@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import { fetchGame } from "./thunks";
 import type { Game, ActiveGameState, ActiveRound } from "@/lib/api/types";
 
 // Private type guard — mirrors lib/hooks/use-game-state.ts:20-22
@@ -35,10 +36,22 @@ export const gamesSlice = createSlice({
       state.errors[gameId] = null;
     },
   },
-  // extraReducers will be filled in U2 when fetchGame thunk is created.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  extraReducers: (_builder) => {
-    // filled in U2
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchGame.pending, (state, action) => {
+        state.loading[action.meta.arg.gameId] = true;
+      })
+      .addCase(fetchGame.fulfilled, (state, action) => {
+        const { gameId, game } = action.payload;
+        state.byId[gameId] = game;
+        state.errors[gameId] = null;
+        state.loading[gameId] = false;
+      })
+      .addCase(fetchGame.rejected, (state, action) => {
+        const gameId = action.meta.arg.gameId;
+        state.errors[gameId] = action.error.message ?? "Unknown error";
+        state.loading[gameId] = false;
+      });
   },
 });
 
