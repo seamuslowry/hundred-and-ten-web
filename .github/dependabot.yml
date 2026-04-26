@@ -17,10 +17,6 @@ updates:
           - "react-dom"
           - "@types/react"
           - "@types/react-dom"
-      nextjs-suite:
-        patterns:
-          - "next"
-          - "eslint-config-next"
       non-major-development-dependencies:
         dependency-type: "development"
         update-types:
