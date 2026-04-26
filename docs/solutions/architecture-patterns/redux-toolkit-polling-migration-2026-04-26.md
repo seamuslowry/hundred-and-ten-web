@@ -81,7 +81,7 @@ Adding `hasError` forces polling back on when there's a sync error, regardless o
 
 ### 7. Catch `ConditionError` explicitly, not just `instanceof Error`
 
-When RTK's `condition` option cancels a dispatched thunk (dedup fires), RTK throws `{ name: 'ConditionError' }` — a plain object, not an `Error` instance. An `instanceof Error` check misses it, and `typeof e === 'string'` also misses it. Without an explicit guard, the UI shows "Action failed" when nothing actually failed.
+When RTK's `condition` option cancels a dispatched thunk (dedup fires), **no actions are dispatched to the store** (no `pending`, no `rejected` extraReducers run). However, calling `.unwrap()` on the returned promise still throws — it re-throws the serialized `ConditionError` object: `{ name: 'ConditionError', message: 'Aborted due to condition callback returning false.' }`. This is a plain object, not an `Error` instance (`instanceof Error` is `false`). Without an explicit guard, the UI shows "Action failed" when nothing actually failed.
 
 ### 8. Delete dead "future use" exports
 
