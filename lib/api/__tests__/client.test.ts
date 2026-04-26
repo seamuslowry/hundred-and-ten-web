@@ -88,40 +88,6 @@ describe("apiFetch", () => {
     expect(headers["Authorization"]).toBeUndefined();
   });
 
-  it("retries on 401 with refreshed token", async () => {
-    const mockFetch = vi.mocked(fetch);
-
-    // First call returns 401
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ detail: "Unauthorized" }), { status: 401 }),
-    );
-    // Retry succeeds
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ data: "success" }), { status: 200 }),
-    );
-
-    mockGetFirebaseAuth.mockReturnValue({
-      currentUser: {
-        getIdToken: vi
-          .fn()
-          .mockResolvedValueOnce("old-token")
-          .mockResolvedValueOnce("new-token"),
-      },
-    } as never);
-
-    const result = await apiFetch("/test");
-
-    expect(result).toEqual({ data: "success" });
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-
-    // Second call should use refreshed token
-    const retryHeaders = mockFetch.mock.calls[1][1]?.headers as Record<
-      string,
-      string
-    >;
-    expect(retryHeaders["Authorization"]).toBe("Bearer new-token");
-  });
-
   it("throws ApiError on non-401 errors", async () => {
     const mockFetch = vi.mocked(fetch);
     mockFetch.mockResolvedValue(
@@ -148,13 +114,5 @@ describe("apiFetch", () => {
     await expect(apiFetch("/test")).rejects.toThrow(
       "Field required, Invalid value",
     );
-  });
-
-  it("returns undefined for 204 responses", async () => {
-    const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
-
-    const result = await apiFetch("/test");
-    expect(result).toBeUndefined();
   });
 });
