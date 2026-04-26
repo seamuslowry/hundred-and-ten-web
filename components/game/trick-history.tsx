@@ -57,9 +57,9 @@ export function TrickHistory({ tricks, playerNames }: TrickHistoryProps) {
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Trick {i + 1}
                   </span>
-                  {trick.winning_play && (
+                  {trick.winningPlay && (
                     <span className="text-xs text-gray-400 dark:text-gray-500">
-                      Won by {displayName(trick.winning_play.player_id)}
+                      Won by {displayName(trick.winningPlay.playerId)}
                     </span>
                   )}
                   {trick.bleeding && (
@@ -71,10 +71,10 @@ export function TrickHistory({ tricks, playerNames }: TrickHistoryProps) {
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {trick.plays.map((play) => {
                     const isWinning =
-                      trick.winning_play?.player_id === play.player_id;
+                      trick.winningPlay?.playerId === play.playerId;
                     return (
                       <div
-                        key={`${play.player_id}-${play.card.number}-${play.card.suit}`}
+                        key={`${play.playerId}-${play.card.number}-${play.card.suit}`}
                         className={`flex min-w-[50px] flex-col items-center rounded-lg border-2 p-1.5 ${
                           isWinning
                             ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-900"
@@ -82,7 +82,7 @@ export function TrickHistory({ tricks, playerNames }: TrickHistoryProps) {
                         }`}
                       >
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {displayName(play.player_id)}
+                          {displayName(play.playerId)}
                         </span>
                         <span
                           className={`text-base font-bold ${cardTextColor(play.card)}`}

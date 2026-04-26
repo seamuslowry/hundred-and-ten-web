@@ -27,7 +27,7 @@ export interface Card {
 export interface Player {
   id: string;
   name: string;
-  picture_url: string | null;
+  pictureUrl: string | null;
 }
 
 export interface PlayerInGame {
@@ -46,13 +46,13 @@ export interface Lobby {
 
 export interface Trick {
   bleeding: boolean;
-  plays: PlayCard[];
-  winning_play: PlayCard | null;
+  plays: IdentifiedPlay[];
+  winningPlay: IdentifiedPlay | null;
 }
 
-export interface PlayCard {
+export interface IdentifiedPlay {
   type: "PLAY";
-  player_id: string;
+  playerId: string;
   card: Card;
 }
 
@@ -79,7 +79,7 @@ export interface ApiEvent {
 }
 
 export interface Bid {
-  player_id: string;
+  playerId: string;
   amount: number;
 }
 
@@ -94,25 +94,25 @@ export interface Game {
   players: PlayerInGame[];
   scores: Record<string, number>;
   active: ActiveGameState;
-  completed_rounds: CompletedRound[];
+  completedRounds: CompletedRound[];
 }
 
 export type ActiveGameState = ActiveRound | WonInformation;
 
 export interface WonInformation {
   status: "WON";
-  winner_player_id: string;
+  winnerPlayerId: string;
 }
 
 export type CompletedRound = CompletedWithBidderRound | CompletedNoBiddersRound;
 
 export interface CompletedWithBidderRound {
   status: "COMPLETED";
-  dealer_player_id: string;
+  dealerPlayerId: string;
   trump: SelectableSuit;
-  bid_history: Bid[];
+  bidHistory: Bid[];
   bid: Bid | null;
-  initial_hands: Record<string, Card[]>;
+  initialHands: Record<string, Card[]>;
   discards: Record<string, DiscardRecord>;
   tricks: Trick[];
   scores: Record<string, number>;
@@ -120,19 +120,19 @@ export interface CompletedWithBidderRound {
 
 export interface CompletedNoBiddersRound {
   status: "COMPLETED_NO_BIDDERS";
-  dealer_player_id: string;
-  initial_hands: Record<string, Card[]>;
+  dealerPlayerId: string;
+  initialHands: Record<string, Card[]>;
 }
 
 export interface ActiveRound {
   status: "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS";
-  dealer_player_id: string;
-  bid_history: Bid[];
+  dealerPlayerId: string;
+  bidHistory: Bid[];
   bid: Bid | null;
   hands: Record<string, Card[] | number>;
   trump: SelectableSuit | null;
   discards: Record<string, DiscardRecord | number>;
   tricks: Trick[];
-  active_player_id: string;
-  queued_actions: unknown[];
+  activePlayerId: string;
+  queuedActions: unknown[];
 }

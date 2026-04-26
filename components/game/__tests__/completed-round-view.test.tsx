@@ -16,14 +16,14 @@ const playerNames = new Map([
 
 const completedRound: CompletedWithBidderRound = {
   status: "COMPLETED",
-  dealer_player_id: "player-1",
+  dealerPlayerId: "player-1",
   trump: "HEARTS",
-  bid_history: [
-    { player_id: "player-1", amount: 0 },
-    { player_id: "player-2", amount: 20 },
+  bidHistory: [
+    { playerId: "player-1", amount: 0 },
+    { playerId: "player-2", amount: 20 },
   ],
-  bid: { player_id: "player-2", amount: 20 },
-  initial_hands: {
+  bid: { playerId: "player-2", amount: 20 },
+  initialHands: {
     "player-1": [{ number: "ACE", suit: "HEARTS" }],
     "player-2": [{ number: "KING", suit: "SPADES" }],
   },
@@ -40,18 +40,18 @@ const completedRound: CompletedWithBidderRound = {
       plays: [
         {
           type: "PLAY",
-          player_id: "player-1",
+          playerId: "player-1",
           card: { number: "ACE", suit: "HEARTS" },
         },
         {
           type: "PLAY",
-          player_id: "player-2",
+          playerId: "player-2",
           card: { number: "KING", suit: "SPADES" },
         },
       ],
-      winning_play: {
+      winningPlay: {
         type: "PLAY",
-        player_id: "player-1",
+        playerId: "player-1",
         card: { number: "ACE", suit: "HEARTS" },
       },
     },
@@ -60,13 +60,13 @@ const completedRound: CompletedWithBidderRound = {
       plays: [
         {
           type: "PLAY",
-          player_id: "player-2",
+          playerId: "player-2",
           card: { number: "FIVE", suit: "HEARTS" },
         },
       ],
-      winning_play: {
+      winningPlay: {
         type: "PLAY",
-        player_id: "player-2",
+        playerId: "player-2",
         card: { number: "FIVE", suit: "HEARTS" },
       },
     },
@@ -79,8 +79,8 @@ const completedRound: CompletedWithBidderRound = {
 
 const noBidderRound: CompletedNoBiddersRound = {
   status: "COMPLETED_NO_BIDDERS",
-  dealer_player_id: "player-1",
-  initial_hands: {
+  dealerPlayerId: "player-1",
+  initialHands: {
     "player-1": [{ number: "JACK", suit: "DIAMONDS" }],
     "player-2": [{ number: "TEN", suit: "CLUBS" }],
   },

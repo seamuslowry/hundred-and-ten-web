@@ -49,7 +49,7 @@ describe("RoundHeader", () => {
       <RoundHeader
         {...defaultProps}
         phase="DISCARD"
-        bid={{ player_id: "player-2", amount: 20 }}
+        bid={{ playerId: "player-2", amount: 20 }}
       />,
     );
     expect(screen.getByText(/Bob.*@.*Twenty/)).toBeInTheDocument();
@@ -148,7 +148,7 @@ describe("RoundHeader", () => {
       <RoundHeader
         {...defaultProps}
         phase="TRICKS"
-        bid={{ player_id: "player-3", amount: 25 }}
+        bid={{ playerId: "player-3", amount: 25 }}
       />,
     );
     expect(screen.getByText(/Carol.*@.*Twenty Five/)).toBeInTheDocument();
