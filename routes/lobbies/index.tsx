@@ -82,7 +82,7 @@ function LobbiesContent() {
   );
 }
 
-function LobbiesPage() {
+export function LobbiesPage() {
   return (
     <RequireAuth>
       <LobbiesContent />
