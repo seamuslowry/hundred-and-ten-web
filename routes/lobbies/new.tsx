@@ -4,6 +4,10 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useAppDispatch } from "@/store/hooks";
 import { createLobbyThunk } from "@/store/lobbies/thunks";
+import {
+  isConditionError,
+  messageFromRejection,
+} from "@/lib/redux/condition-error";
 
 export const Route = createFileRoute("/lobbies/new")({
   component: NewLobbyPage,
@@ -36,20 +40,8 @@ function NewLobbyContent() {
       ).unwrap();
       navigate({ to: "/lobbies/$lobbyId", params: { lobbyId: lobby.id } });
     } catch (e) {
-      if (
-        e != null &&
-        typeof e === "object" &&
-        (e as { name?: string }).name === "ConditionError"
-      ) {
-        return;
-      }
-      setError(
-        e instanceof Error
-          ? e.message
-          : typeof e === "string"
-            ? e
-            : "Failed to create lobby",
-      );
+      if (isConditionError(e)) return;
+      setError(messageFromRejection(e, "Failed to create lobby"));
     } finally {
       setSubmitting(false);
     }

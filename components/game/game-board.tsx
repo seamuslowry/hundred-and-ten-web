@@ -9,6 +9,10 @@ import type {
 } from "@/lib/api/types";
 import { useAppDispatch } from "@/store/hooks";
 import { performGameAction } from "@/store/games/thunks";
+import {
+  isConditionError,
+  messageFromRejection,
+} from "@/lib/redux/condition-error";
 import { RoundHeader } from "./round-header";
 import { BidHistoryPanel } from "./bid-history-panel";
 import { DiscardArea } from "./discard-area";
@@ -62,21 +66,8 @@ export function GameBoard({
     } catch (e) {
       // condition() cancellation: RTK throws {name:'ConditionError'} — not a user error.
       // This fires when a second action is dispatched while one is already in-flight.
-      if (
-        e != null &&
-        typeof e === "object" &&
-        (e as { name?: string }).name === "ConditionError"
-      ) {
-        return;
-      }
-      // rejectWithValue throws the payload directly (may be string, not Error)
-      setActionError(
-        e instanceof Error
-          ? e.message
-          : typeof e === "string"
-            ? e
-            : "Action failed",
-      );
+      if (isConditionError(e)) return;
+      setActionError(messageFromRejection(e, "Action failed"));
     } finally {
       setActionInFlight(false);
     }

@@ -11,6 +11,10 @@ import { fetchLobby, joinLobby, startGame } from "@/store/lobbies/thunks";
 import { selectLobbyById } from "@/store/lobbies/selectors";
 import { selectGameById } from "@/store/games/selectors";
 import { selectPlayersByIds } from "@/store/players/selectors";
+import {
+  isConditionError,
+  messageFromRejection,
+} from "@/lib/redux/condition-error";
 
 export const Route = createFileRoute("/lobbies/$lobbyId")({
   component: LobbyDetail,
@@ -81,30 +85,18 @@ function LobbyDetailContent() {
   const isMember = isOrganizer || lobby?.players.some((p) => p.id === playerId);
   const isInvitee = lobby?.invitees.some((p) => p.id === playerId);
 
-  async function handleJoin() {
+  const handleJoin = useCallback(async () => {
     if (!playerId) return;
     setActionError(null);
     try {
       await dispatch(joinLobby({ playerId, lobbyId })).unwrap();
     } catch (e) {
-      if (
-        e != null &&
-        typeof e === "object" &&
-        (e as { name?: string }).name === "ConditionError"
-      ) {
-        return;
-      }
-      setActionError(
-        e instanceof Error
-          ? e.message
-          : typeof e === "string"
-            ? e
-            : "Failed to join lobby",
-      );
+      if (isConditionError(e)) return;
+      setActionError(messageFromRejection(e, "Failed to join lobby"));
     }
-  }
+  }, [dispatch, playerId, lobbyId]);
 
-  async function handleStart() {
+  const handleStart = useCallback(async () => {
     if (!playerId) return;
     setActionError(null);
     try {
@@ -112,22 +104,10 @@ function LobbyDetailContent() {
       // No explicit navigate — startGame's internal fetchGame will populate
       // the games slice, triggering the navigation useEffect above.
     } catch (e) {
-      if (
-        e != null &&
-        typeof e === "object" &&
-        (e as { name?: string }).name === "ConditionError"
-      ) {
-        return;
-      }
-      setActionError(
-        e instanceof Error
-          ? e.message
-          : typeof e === "string"
-            ? e
-            : "Failed to start game",
-      );
+      if (isConditionError(e)) return;
+      setActionError(messageFromRejection(e, "Failed to start game"));
     }
-  }
+  }, [dispatch, playerId, lobbyId]);
 
   // Loading guard: only on initial render before data lands
   if (loading && !lobby) {
