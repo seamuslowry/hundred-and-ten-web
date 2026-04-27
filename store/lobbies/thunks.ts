@@ -11,6 +11,7 @@ import {
 import { searchPlayers } from "@/lib/api/players";
 import { playersUpserted } from "@/store/players/slice";
 import { fetchGame } from "@/store/games/thunks";
+import { LOBBY_ACTION_NAMES, isActionInFlight } from "./slice";
 import type { Lobby } from "@/lib/api/types";
 import type { RootState } from "@/store";
 
@@ -80,8 +81,15 @@ export const joinLobby = createAsyncThunk<
     await dispatch(fetchLobby({ playerId, lobbyId }));
   },
   {
+    // Per-action dedup: only block joinLobby if a join is already pending for
+    // this lobby. Other actions (invitePlayer, startGame) on the same lobby do
+    // not interfere — see slice.ts LobbiesState.actionInFlight comment.
     condition({ lobbyId }, { getState }) {
-      return !getState().lobbies.actionInFlight[lobbyId];
+      return !isActionInFlight(
+        getState().lobbies,
+        lobbyId,
+        LOBBY_ACTION_NAMES.join,
+      );
     },
   },
 );
@@ -106,7 +114,11 @@ export const invitePlayer = createAsyncThunk<
   },
   {
     condition({ lobbyId }, { getState }) {
-      return !getState().lobbies.actionInFlight[lobbyId];
+      return !isActionInFlight(
+        getState().lobbies,
+        lobbyId,
+        LOBBY_ACTION_NAMES.invite,
+      );
     },
   },
 );
@@ -135,7 +147,11 @@ export const startGame = createAsyncThunk<
   },
   {
     condition({ lobbyId }, { getState }) {
-      return !getState().lobbies.actionInFlight[lobbyId];
+      return !isActionInFlight(
+        getState().lobbies,
+        lobbyId,
+        LOBBY_ACTION_NAMES.start,
+      );
     },
   },
 );

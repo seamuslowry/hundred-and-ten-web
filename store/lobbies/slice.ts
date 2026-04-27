@@ -21,8 +21,13 @@ export interface LobbiesState {
   errors: Record<string, string | null>;
   /** Error from fetchLobbiesList. */
   listError: string | null;
-  /** Per-lobbyId in-flight flag for joinLobby, invitePlayer, startGame. */
-  actionInFlight: Record<string, boolean>;
+  /**
+   * Per-lobbyId, per-action-type in-flight flag for joinLobby, invitePlayer,
+   * startGame. Keyed by (lobbyId → actionName → boolean) so concurrent
+   * different-action dispatches on the same lobby don't deduplicate each
+   * other (e.g. organizer can invite a player while startGame is pending).
+   */
+  actionInFlight: Record<string, Record<string, boolean>>;
 }
 
 const initialState: LobbiesState = {
@@ -34,6 +39,35 @@ const initialState: LobbiesState = {
   listError: null,
   actionInFlight: {},
 };
+
+/** Action names used as inner keys in `actionInFlight[lobbyId]`. */
+export const LOBBY_ACTION_NAMES = {
+  join: "join",
+  invite: "invite",
+  start: "start",
+} as const;
+
+export type LobbyActionName =
+  (typeof LOBBY_ACTION_NAMES)[keyof typeof LOBBY_ACTION_NAMES];
+
+/** Helper: read whether a specific action is in flight for a lobby. */
+export function isActionInFlight(
+  state: LobbiesState,
+  lobbyId: string,
+  action: LobbyActionName,
+): boolean {
+  return state.actionInFlight[lobbyId]?.[action] ?? false;
+}
+
+/** Helper: read whether ANY action is in flight for a lobby (for UI disabling). */
+export function isAnyActionInFlight(
+  state: LobbiesState,
+  lobbyId: string,
+): boolean {
+  const lobbyActions = state.actionInFlight[lobbyId];
+  if (!lobbyActions) return false;
+  return Object.values(lobbyActions).some(Boolean);
+}
 
 export const lobbiesSlice = createSlice({
   name: "lobbies",
@@ -94,30 +128,40 @@ export const lobbiesSlice = createSlice({
     builder
       .addCase(joinLobby.pending, (state, action) => {
         const { lobbyId } = action.meta.arg;
-        state.actionInFlight[lobbyId] = true;
+        state.actionInFlight[lobbyId] ??= {};
+        state.actionInFlight[lobbyId][LOBBY_ACTION_NAMES.join] = true;
       })
       .addCase(joinLobby.fulfilled, (state, action) => {
         const { lobbyId } = action.meta.arg;
-        state.actionInFlight[lobbyId] = false;
+        if (state.actionInFlight[lobbyId]) {
+          state.actionInFlight[lobbyId][LOBBY_ACTION_NAMES.join] = false;
+        }
       })
       .addCase(joinLobby.rejected, (state, action) => {
         const { lobbyId } = action.meta.arg;
-        state.actionInFlight[lobbyId] = false;
+        if (state.actionInFlight[lobbyId]) {
+          state.actionInFlight[lobbyId][LOBBY_ACTION_NAMES.join] = false;
+        }
       });
 
     // ── invitePlayer ──────────────────────────────────────────────────────────
     builder
       .addCase(invitePlayer.pending, (state, action) => {
         const { lobbyId } = action.meta.arg;
-        state.actionInFlight[lobbyId] = true;
+        state.actionInFlight[lobbyId] ??= {};
+        state.actionInFlight[lobbyId][LOBBY_ACTION_NAMES.invite] = true;
       })
       .addCase(invitePlayer.fulfilled, (state, action) => {
         const { lobbyId } = action.meta.arg;
-        state.actionInFlight[lobbyId] = false;
+        if (state.actionInFlight[lobbyId]) {
+          state.actionInFlight[lobbyId][LOBBY_ACTION_NAMES.invite] = false;
+        }
       })
       .addCase(invitePlayer.rejected, (state, action) => {
         const { lobbyId } = action.meta.arg;
-        state.actionInFlight[lobbyId] = false;
+        if (state.actionInFlight[lobbyId]) {
+          state.actionInFlight[lobbyId][LOBBY_ACTION_NAMES.invite] = false;
+        }
       });
 
     // ── startGame ─────────────────────────────────────────────────────────────
@@ -125,15 +169,20 @@ export const lobbiesSlice = createSlice({
     builder
       .addCase(startGame.pending, (state, action) => {
         const { lobbyId } = action.meta.arg;
-        state.actionInFlight[lobbyId] = true;
+        state.actionInFlight[lobbyId] ??= {};
+        state.actionInFlight[lobbyId][LOBBY_ACTION_NAMES.start] = true;
       })
       .addCase(startGame.fulfilled, (state, action) => {
         const { lobbyId } = action.meta.arg;
-        state.actionInFlight[lobbyId] = false;
+        if (state.actionInFlight[lobbyId]) {
+          state.actionInFlight[lobbyId][LOBBY_ACTION_NAMES.start] = false;
+        }
       })
       .addCase(startGame.rejected, (state, action) => {
         const { lobbyId } = action.meta.arg;
-        state.actionInFlight[lobbyId] = false;
+        if (state.actionInFlight[lobbyId]) {
+          state.actionInFlight[lobbyId][LOBBY_ACTION_NAMES.start] = false;
+        }
       });
 
     // ── searchPlayersThunk ────────────────────────────────────────────────────

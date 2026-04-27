@@ -9,7 +9,7 @@ import { useGamePolling } from "@/lib/hooks/use-game-polling";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchLobby, joinLobby, startGame } from "@/store/lobbies/thunks";
 import { selectLobbyById } from "@/store/lobbies/selectors";
-import { selectGameById } from "@/store/games/selectors";
+import { selectActiveRound } from "@/store/games/selectors";
 import { selectPlayersByIds } from "@/store/players/selectors";
 import {
   isConditionError,
@@ -39,8 +39,11 @@ function LobbyDetailContent() {
   // Lobby data from selector
   const lobby = useAppSelector((s) => selectLobbyById(s, lobbyId));
 
-  // Game data from games slice — this is the navigation signal
-  const game = useAppSelector((s) => selectGameById(s, lobbyId));
+  // Active round in the games slice is the navigation signal. We use
+  // selectActiveRound (not selectGameById) so a completed game lingering in the
+  // slice does NOT force-redirect the user when they navigate back to a lobby
+  // URL whose game is already over.
+  const activeRound = useAppSelector((s) => selectActiveRound(s, lobbyId));
 
   // Player IDs — memoized to keep selectPlayersByIds size-1 cache stable
   const playerIds = useMemo(
@@ -61,19 +64,35 @@ function LobbyDetailContent() {
   // Inline single-consumer derivations from lobbies slice
   const loading = useAppSelector((s) => s.lobbies.loading[lobbyId] ?? false);
   const error = useAppSelector((s) => s.lobbies.errors[lobbyId] ?? null);
-  const actionInFlight = useAppSelector(
-    (s) => s.lobbies.actionInFlight[lobbyId] ?? false,
+  // Per-action flags — Join and Start now have independent in-flight state,
+  // so an in-flight invite no longer blocks Start (and vice versa).
+  const joinInFlight = useAppSelector(
+    (s) => s.lobbies.actionInFlight[lobbyId]?.join ?? false,
+  );
+  const startInFlight = useAppSelector(
+    (s) => s.lobbies.actionInFlight[lobbyId]?.start ?? false,
   );
 
   // Local action error (per PR 1's error channel separation)
   const [actionError, setActionError] = useState<string | null>(null);
 
-  // Single navigation signal — when game appears, navigate
+  // Tracks the post-startGame window: thunk resolved successfully but the
+  // resulting game has not yet appeared in the games slice (e.g. internal
+  // fetchGame is still in flight, or fetchGame failed and the polling
+  // controller is recovering). Provides UI feedback during this gap so the
+  // user does not click Start again or assume nothing happened.
+  const [startPending, setStartPending] = useState(false);
+
+  // Single navigation signal — when an in-progress game appears, navigate.
+  // Completed games (status === 'WON') are not a navigation trigger.
+  // The component will unmount on navigate, so startPending need not be cleared
+  // here (the project's ESLint config bans setState inside useEffect — see
+  // docs/solutions/best-practices/react-async-handler-memoization-...).
   useEffect(() => {
-    if (game) {
+    if (activeRound) {
       navigate({ to: "/games/$gameId", params: { gameId: lobbyId } });
     }
-  }, [game, lobbyId, navigate]);
+  }, [activeRound, lobbyId, navigate]);
 
   // Re-fetch lobby after PlayerSearch invites
   const handleInvited = useCallback(() => {
@@ -101,8 +120,11 @@ function LobbyDetailContent() {
     setActionError(null);
     try {
       await dispatch(startGame({ playerId, lobbyId })).unwrap();
-      // No explicit navigate — startGame's internal fetchGame will populate
-      // the games slice, triggering the navigation useEffect above.
+      // Action succeeded server-side. The internal fetchGame may have populated
+      // the games slice already (navigation useEffect will fire), or it may
+      // have failed transiently — either way, the polling controller will
+      // catch up. Show the "Connecting..." state until the activeRound lands.
+      setStartPending(true);
     } catch (e) {
       if (isConditionError(e)) return;
       setActionError(messageFromRejection(e, "Failed to start game"));
@@ -149,6 +171,17 @@ function LobbyDetailContent() {
         </span>
       </div>
 
+      {/* Sync error banner: shown when a re-fetch failed but cached lobby is
+          still rendered (stale data). Distinct from the action error below. */}
+      {error && lobby && (
+        <p
+          className="mt-3 rounded-md bg-yellow-50 px-3 py-2 text-sm text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200"
+          role="status"
+        >
+          {error} (showing cached data)
+        </p>
+      )}
+
       <div className="mt-4">
         <MemberList
           organizer={lobby.organizer}
@@ -161,11 +194,11 @@ function LobbyDetailContent() {
       {!isMember && (isInvitee || lobby.accessibility === "PUBLIC") && (
         <button
           onClick={handleJoin}
-          disabled={actionInFlight}
+          disabled={joinInFlight}
           className="mt-4 w-full rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-50"
           style={{ minHeight: 44 }}
         >
-          {actionInFlight ? "Joining..." : "Join Lobby"}
+          {joinInFlight ? "Joining..." : "Join Lobby"}
         </button>
       )}
 
@@ -175,11 +208,15 @@ function LobbyDetailContent() {
 
           <button
             onClick={handleStart}
-            disabled={actionInFlight}
+            disabled={startInFlight || startPending}
             className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             style={{ minHeight: 44 }}
           >
-            {actionInFlight ? "Starting..." : "Start Game"}
+            {startInFlight
+              ? "Starting..."
+              : startPending
+                ? "Connecting to game..."
+                : "Start Game"}
           </button>
         </div>
       )}
