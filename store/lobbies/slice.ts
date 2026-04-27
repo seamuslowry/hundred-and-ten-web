@@ -1,5 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { Lobby } from "@/lib/api/types";
+import {
+  fetchLobbiesList,
+  fetchLobby,
+  createLobbyThunk,
+  joinLobby,
+  invitePlayer,
+  startGame,
+} from "./thunks";
 
 export interface LobbiesState {
   byId: Record<string, Lobby>;
@@ -32,8 +40,98 @@ export const lobbiesSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    // filled in U3
-    void builder;
+    // ── fetchLobbiesList ──────────────────────────────────────────────────────
+    builder
+      .addCase(fetchLobbiesList.pending, (state) => {
+        state.listLoading = true;
+      })
+      .addCase(fetchLobbiesList.fulfilled, (state, action) => {
+        const { lobbies } = action.payload;
+        for (const lobby of lobbies) {
+          state.byId[lobby.id] = lobby;
+        }
+        state.list = lobbies.map((l) => l.id);
+        state.listError = null;
+        state.listLoading = false;
+      })
+      .addCase(fetchLobbiesList.rejected, (state, action) => {
+        state.listError = action.error.message ?? "Failed to load lobbies";
+        state.listLoading = false;
+      });
+
+    // ── fetchLobby ────────────────────────────────────────────────────────────
+    builder
+      .addCase(fetchLobby.pending, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.loading[lobbyId] = true;
+      })
+      .addCase(fetchLobby.fulfilled, (state, action) => {
+        const { lobbyId, lobby } = action.payload;
+        state.byId[lobbyId] = lobby;
+        state.errors[lobbyId] = null;
+        state.loading[lobbyId] = false;
+      })
+      .addCase(fetchLobby.rejected, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.errors[lobbyId] = action.error.message ?? "Failed to load lobby";
+        state.loading[lobbyId] = false;
+      });
+
+    // ── createLobbyThunk ──────────────────────────────────────────────────────
+    builder.addCase(createLobbyThunk.fulfilled, (state, action) => {
+      const lobby = action.payload;
+      state.byId[lobby.id] = lobby;
+    });
+
+    // ── joinLobby ─────────────────────────────────────────────────────────────
+    builder
+      .addCase(joinLobby.pending, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.actionInFlight[lobbyId] = true;
+      })
+      .addCase(joinLobby.fulfilled, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.actionInFlight[lobbyId] = false;
+      })
+      .addCase(joinLobby.rejected, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.actionInFlight[lobbyId] = false;
+      });
+
+    // ── invitePlayer ──────────────────────────────────────────────────────────
+    builder
+      .addCase(invitePlayer.pending, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.actionInFlight[lobbyId] = true;
+      })
+      .addCase(invitePlayer.fulfilled, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.actionInFlight[lobbyId] = false;
+      })
+      .addCase(invitePlayer.rejected, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.actionInFlight[lobbyId] = false;
+      });
+
+    // ── startGame ─────────────────────────────────────────────────────────────
+    // The game itself lands in state.games.byId[lobbyId] via fetchGame.fulfilled.
+    builder
+      .addCase(startGame.pending, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.actionInFlight[lobbyId] = true;
+      })
+      .addCase(startGame.fulfilled, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.actionInFlight[lobbyId] = false;
+      })
+      .addCase(startGame.rejected, (state, action) => {
+        const { lobbyId } = action.meta.arg;
+        state.actionInFlight[lobbyId] = false;
+      });
+
+    // ── searchPlayersThunk ────────────────────────────────────────────────────
+    // No lobbies-slice state is touched; players are upserted directly from the
+    // thunk body via dispatch(playersUpserted(...)) before the thunk resolves.
   },
 });
 
