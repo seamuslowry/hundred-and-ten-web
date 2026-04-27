@@ -80,12 +80,6 @@ export type GameAction =
   | { type: "DISCARD"; cards: Card[] }
   | { type: "PLAY"; card: Card };
 
-export type Suggestion =
-  | { type: "BID"; player_id: string; amount: BidValue }
-  | { type: "SELECT_TRUMP"; player_id: string; suit: SelectableSuit }
-  | { type: "DISCARD"; player_id: string; cards: Card[] }
-  | { type: "PLAY"; player_id: string; card: Card };
-
 export interface SearchRequest {
   searchText: string;
   offset: number;

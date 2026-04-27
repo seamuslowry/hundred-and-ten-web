@@ -2,7 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { createLobby } from "@/lib/api/lobbies";
+import { useAppDispatch } from "@/store/hooks";
+import { createLobbyThunk } from "@/store/lobbies/thunks";
+import {
+  isConditionError,
+  messageFromRejection,
+} from "@/lib/redux/condition-error";
 
 export const Route = createFileRoute("/lobbies/new")({
   component: NewLobbyPage,
@@ -11,6 +16,7 @@ export const Route = createFileRoute("/lobbies/new")({
 function NewLobbyContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [name, setName] = useState("");
   const [accessibility, setAccessibility] = useState<"PUBLIC" | "PRIVATE">(
     "PUBLIC",
@@ -25,10 +31,17 @@ function NewLobbyContent() {
     setSubmitting(true);
     setError(null);
     try {
-      const lobby = await createLobby(user.uid, name.trim(), accessibility);
+      const lobby = await dispatch(
+        createLobbyThunk({
+          playerId: user.uid,
+          name: name.trim(),
+          accessibility,
+        }),
+      ).unwrap();
       navigate({ to: "/lobbies/$lobbyId", params: { lobbyId: lobby.id } });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create lobby");
+      if (isConditionError(e)) return;
+      setError(messageFromRejection(e, "Failed to create lobby"));
     } finally {
       setSubmitting(false);
     }

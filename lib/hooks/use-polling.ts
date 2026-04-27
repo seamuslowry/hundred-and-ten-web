@@ -15,7 +15,6 @@ interface UsePollingResult<T> {
 }
 
 const DEFAULT_INTERVAL = 3000;
-const MAX_BACKOFF = 30000;
 
 export function usePolling<T>({
   fetcher,
@@ -27,7 +26,6 @@ export function usePolling<T>({
   const [error, setError] = useState<Error | null>(null);
   const [isStale, setIsStale] = useState(false);
 
-  const failureCount = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetcherRef = useRef(fetcher);
 
@@ -42,9 +40,7 @@ export function usePolling<T>({
       setData(result);
       setError(null);
       setIsStale(false);
-      failureCount.current = 0;
     } catch (e) {
-      failureCount.current += 1;
       setError(e instanceof Error ? e : new Error(String(e)));
       setIsStale(true);
     } finally {
@@ -64,16 +60,11 @@ export function usePolling<T>({
     function scheduleNext() {
       if (cancelled) return;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      const backoff = Math.min(
-        interval * Math.pow(2, failureCount.current),
-        MAX_BACKOFF,
-      );
-      const delay = failureCount.current > 0 ? backoff : interval;
       timeoutRef.current = setTimeout(async () => {
         if (cancelled) return;
         await poll();
         scheduleNext();
-      }, delay);
+      }, interval);
     }
 
     poll().then(() => {

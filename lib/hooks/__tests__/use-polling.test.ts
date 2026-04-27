@@ -63,12 +63,30 @@ describe("usePolling", () => {
     expect(result.current.error?.message).toBe("Network error");
   });
 
-  it("applies exponential backoff on failure", async () => {
+  it("polls at constant interval after a failure", async () => {
     const fetcher = vi
       .fn()
-      .mockRejectedValueOnce(new Error("fail 1"))
-      .mockRejectedValueOnce(new Error("fail 2"))
+      .mockRejectedValueOnce(new Error("fail"))
       .mockResolvedValue({ id: 1 });
+
+    renderHook(() => usePolling({ fetcher, interval: 3000 }));
+
+    // Initial fetch (failure)
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    // After failure, next poll fires at interval (3s), not 2×interval (6s)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("maintains constant interval across five consecutive failures", async () => {
+    const fetcher = vi.fn().mockRejectedValue(new Error("persistent fail"));
 
     renderHook(() => usePolling({ fetcher, interval: 3000 }));
 
@@ -77,20 +95,15 @@ describe("usePolling", () => {
       expect(fetcher).toHaveBeenCalledTimes(1);
     });
 
-    // After first failure, backoff = 3000 * 2^1 = 6000ms
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(3000);
-    });
-    // Shouldn't have polled yet (backoff is 6s)
-    expect(fetcher).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(3000);
-    });
-    // Now at 6s total, should poll
-    await waitFor(() => {
-      expect(fetcher).toHaveBeenCalledTimes(2);
-    });
+    // Each subsequent failure should fire at exactly interval (3s), not longer
+    for (let i = 2; i <= 5; i++) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3000);
+      });
+      await waitFor(() => {
+        expect(fetcher).toHaveBeenCalledTimes(i);
+      });
+    }
   });
 
   it("does not poll when disabled", async () => {
