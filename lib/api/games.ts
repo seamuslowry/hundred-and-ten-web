@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { GameAction, Suggestion, Player, ApiEvent, Game } from "./types";
+import type { GameAction, Player, ApiEvent, Game } from "./types";
 
 export function performAction(
   playerId: string,
@@ -10,13 +10,6 @@ export function performAction(
     method: "POST",
     body: JSON.stringify(action),
   });
-}
-
-export function getSuggestions(
-  playerId: string,
-  gameId: string,
-): Promise<Suggestion[]> {
-  return apiFetch(`/players/${playerId}/games/${gameId}/suggestions`);
 }
 
 export function getGamePlayers(
