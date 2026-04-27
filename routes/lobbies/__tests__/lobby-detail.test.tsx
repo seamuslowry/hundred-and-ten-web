@@ -138,6 +138,14 @@ const startedGame: Game = {
   completedRounds: [],
 };
 
+const completedGame: Game = {
+  ...startedGame,
+  active: {
+    status: "WON",
+    winnerPlayerId: PLAYER_ID,
+  },
+};
+
 // ─── renderWithStore helper ───────────────────────────────────────────────────
 
 function renderWithStore(
@@ -701,6 +709,221 @@ describe("LobbyDetail", () => {
     // cached name from searchPlayers (NOT the raw ID).
     await waitFor(() => {
       expect(screen.getByText("Cached Invitee Name")).toBeInTheDocument();
+    });
+  });
+
+  // ─── Review fix: completed game in slice does NOT force-redirect ───────────
+
+  it("completed game (status='WON') in slice does NOT trigger navigation — user can view the lobby", async () => {
+    // Pre-seed a WON game for this lobby. If selectActiveRound returned the
+    // game (rather than null), the navigation effect would fire on first render
+    // and redirect the user away from the lobby they just navigated to.
+    renderWithStore(<LobbyDetail />, {
+      games: { byId: { [TEST_LOBBY_ID]: completedGame } },
+    });
+
+    // Lobby content should render normally (after fetchLobby resolves).
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+    });
+
+    // Navigate must NOT have been called by the in-progress game effect.
+    // (No 5s polling progressed — we only assert against the initial render.)
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  // ─── Review fix: per-action actionInFlight keys allow concurrent actions ───
+
+  it("organizer's startGame click does not block invitePlayer click (per-action keys)", async () => {
+    // Setup: organizer scenario with a pending invitee already in slice cache
+    // so we don't have to drive the search debounce.
+    setupAuth(PLAYER_ID);
+    mockGetLobby.mockResolvedValue(lobbyAsOrganizer);
+    mockGetLobbyPlayers.mockResolvedValue(lobbyPlayersAsOrganizer);
+
+    // Hold startGame in flight by never resolving its promise.
+    let resolveStart: (() => void) | undefined;
+    mockStartGameApi.mockReturnValue(
+      new Promise<never[]>((res) => {
+        resolveStart = () => res([]);
+      }),
+    );
+    // searchPlayers + invite both available.
+    mockSearchPlayers.mockResolvedValue([
+      { id: INVITEE_ID, name: "Invitee Name", pictureUrl: null },
+    ]);
+    mockInvitePlayer.mockResolvedValue(undefined);
+
+    renderWithStore(<LobbyDetail />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Start Game/ }),
+      ).toBeInTheDocument();
+    });
+
+    // Click Start — the thunk pends because we never resolve.
+    fireEvent.click(screen.getByRole("button", { name: /Start Game/ }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Starting/ }),
+      ).toBeInTheDocument();
+    });
+
+    // While Start is in flight, the organizer searches for and invites a player.
+    const input = screen.getByPlaceholderText("Search players to invite...");
+    fireEvent.change(input, { target: { value: "Invi" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Invite" }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Invite" }));
+
+    // The invite should go through despite startGame still being pending —
+    // pre-fix, the shared actionInFlight[lobbyId] flag would have dropped it
+    // as a ConditionError.
+    await waitFor(() => {
+      expect(mockInvitePlayer).toHaveBeenCalledTimes(1);
+    });
+
+    // Cleanup
+    resolveStart?.();
+  });
+
+  // ─── Review fix: startPending UI feedback after startGame succeeds ─────────
+
+  it("after startGame.fulfilled but before game appears, button shows 'Connecting to game...'", async () => {
+    setupAuth(PLAYER_ID);
+    mockGetLobby.mockResolvedValue(lobbyAsOrganizer);
+    mockGetLobbyPlayers.mockResolvedValue(lobbyPlayersAsOrganizer);
+
+    // startGame's POST resolves but the internal fetchGame fails — simulating
+    // the partial-success case where polling has to recover.
+    mockStartGameApi.mockResolvedValue([]);
+    mockGetGame.mockRejectedValue(new Error("network blip"));
+
+    renderWithStore(<LobbyDetail />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Start Game/ }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Game/ }));
+
+    // After the thunk resolves successfully, the route shows "Connecting to game..."
+    // because activeRound has not yet appeared in the games slice.
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Connecting to game/ }),
+      ).toBeInTheDocument();
+    });
+
+    // The button is also disabled (preventing re-click).
+    expect(
+      screen.getByRole("button", { name: /Connecting to game/ }),
+    ).toBeDisabled();
+  });
+
+  // ─── Review fix: PlayerSearch out-of-order race ───────────────────────────
+
+  it("PlayerSearch ignores a stale search response when a newer search is in flight", async () => {
+    setupAuth(PLAYER_ID);
+    mockGetLobby.mockResolvedValue(lobbyAsOrganizer);
+    mockGetLobbyPlayers.mockResolvedValue(lobbyPlayersAsOrganizer);
+
+    // First search ("ali") will resolve LATE; second ("alex") will resolve EARLY.
+    // Without the request-counter fix, the late "ali" response would clobber
+    // the rendered results for the latest typed query "alex".
+    let resolveAli: ((v: Player[]) => void) | undefined;
+    const aliPromise = new Promise<Player[]>((res) => {
+      resolveAli = res;
+    });
+    mockSearchPlayers.mockImplementationOnce(() => aliPromise);
+    mockSearchPlayers.mockResolvedValueOnce([
+      { id: "alex-id", name: "Alex Match", pictureUrl: null },
+    ]);
+
+    renderWithStore(<LobbyDetail />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByPlaceholderText("Search players to invite..."),
+      ).toBeInTheDocument();
+    });
+
+    const input = screen.getByPlaceholderText("Search players to invite...");
+
+    // Type "ali" → debounce fires → first search starts (still pending).
+    fireEvent.change(input, { target: { value: "ali" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+
+    // Type "alex" → debounce fires → second search starts and resolves immediately.
+    fireEvent.change(input, { target: { value: "alex" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+
+    // The "alex" results render.
+    await waitFor(() => {
+      expect(screen.getByText("Alex Match")).toBeInTheDocument();
+    });
+
+    // Now resolve the stale "ali" search with a different result set.
+    resolveAli?.([
+      { id: "ali-id-1", name: "Ali One", pictureUrl: null },
+      { id: "ali-id-2", name: "Ali Two", pictureUrl: null },
+    ]);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    // The stale "ali" results must NOT replace the visible "alex" results.
+    expect(screen.queryByText("Ali One")).not.toBeInTheDocument();
+    expect(screen.queryByText("Ali Two")).not.toBeInTheDocument();
+    expect(screen.getByText("Alex Match")).toBeInTheDocument();
+  });
+
+  // ─── Review fix: fetchLobby rejection after a successful action ────────────
+
+  it("shows a sync error banner when fetchLobby rejects but a cached lobby is still rendered", async () => {
+    // Pre-seed the lobby in slice. fetchLobby on mount will fail.
+    mockGetLobby.mockRejectedValue(new Error("Could not refresh lobby"));
+    mockGetLobbyPlayers.mockRejectedValue(new Error("Could not refresh"));
+
+    renderWithStore(<LobbyDetail />, {
+      lobbies: { byId: { [TEST_LOBBY_ID]: baseLobby } },
+      players: {
+        byId: {
+          [ORGANIZER_ID]: {
+            id: ORGANIZER_ID,
+            name: "Olivia Organizer",
+            pictureUrl: null,
+          },
+        },
+      },
+    });
+
+    // Lobby content renders from cache (heading visible).
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+    });
+
+    // Sync error banner appears (status role) with "(showing cached data)".
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Could not refresh lobby.*showing cached data/),
+      ).toBeInTheDocument();
     });
   });
 });

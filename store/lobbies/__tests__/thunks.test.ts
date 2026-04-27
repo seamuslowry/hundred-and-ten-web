@@ -348,16 +348,16 @@ describe("joinLobby thunk", () => {
     );
 
     // Should be in-flight immediately
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(true);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.join).toBe(true);
 
     await dispatchPromise;
 
     expect(callOrder).toEqual(["joinLobby", "getLobby"]);
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(false);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.join).toBe(false);
     expect(store.getState().lobbies.byId[LOBBY_ID]).toEqual(mockLobby);
   });
 
-  it("error path: api failure → thunk rejects; errors[lobbyId] unchanged; actionInFlight[lobbyId] = false", async () => {
+  it("error path: api failure → thunk rejects; errors[lobbyId] unchanged; actionInFlight[lobbyId].join = false", async () => {
     mockJoinLobbyApi.mockRejectedValue(new Error("join failed"));
     const store = makeStore();
 
@@ -368,7 +368,7 @@ describe("joinLobby thunk", () => {
     expect(result.meta.requestStatus).toBe("rejected");
     // errors[lobbyId] must NOT be set from action thunk failure (error channel separation)
     expect(store.getState().lobbies.errors[LOBBY_ID]).toBeUndefined();
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(false);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.join).toBe(false);
     // fetchLobby should NOT have been called
     expect(mockGetLobby).not.toHaveBeenCalled();
   });
@@ -387,7 +387,7 @@ describe("joinLobby thunk", () => {
       joinLobby({ playerId: PLAYER_ID, lobbyId: LOBBY_ID }),
     );
 
-    // At this point actionInFlight[LOBBY_ID] = true — second dispatch should be dropped
+    // At this point actionInFlight[LOBBY_ID].join = true — second dispatch should be dropped
     const second = store.dispatch(
       joinLobby({ playerId: PLAYER_ID, lobbyId: LOBBY_ID }),
     );
@@ -396,6 +396,41 @@ describe("joinLobby thunk", () => {
     await Promise.all([first, second]);
 
     expect(mockJoinLobbyApi).toHaveBeenCalledTimes(1);
+  });
+
+  it("per-action dedup: invitePlayer is NOT blocked by an in-flight joinLobby on the same lobby", async () => {
+    // Long-running joinLobby keeps `.join` flag true throughout; meanwhile the
+    // invitePlayer dispatch should still go through because it has its own key.
+    let resolveJoin!: () => void;
+    const joinPromise = new Promise<void>((resolve) => {
+      resolveJoin = resolve;
+    });
+    mockJoinLobbyApi.mockReturnValueOnce(joinPromise);
+    mockGetLobby.mockResolvedValue(mockLobby);
+    mockGetLobbyPlayers.mockResolvedValue([]);
+    mockInvitePlayerApi.mockResolvedValue(undefined);
+    const store = makeStore();
+
+    const joinDispatch = store.dispatch(
+      joinLobby({ playerId: PLAYER_ID, lobbyId: LOBBY_ID }),
+    );
+
+    // .join is in flight; .invite should still be available.
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.join).toBe(true);
+
+    const inviteResult = await store.dispatch(
+      invitePlayer({
+        playerId: PLAYER_ID,
+        lobbyId: LOBBY_ID,
+        inviteeId: INVITEE_ID,
+      }),
+    );
+
+    expect(inviteResult.meta.requestStatus).toBe("fulfilled");
+    expect(mockInvitePlayerApi).toHaveBeenCalledTimes(1);
+
+    resolveJoin();
+    await joinDispatch;
   });
 
   it("isolation: joinLobby for lobbyId-A does not affect lobbyId-B state", async () => {
@@ -407,7 +442,7 @@ describe("joinLobby thunk", () => {
     await store.dispatch(joinLobby({ playerId: PLAYER_ID, lobbyId: LOBBY_ID }));
 
     const state = store.getState().lobbies;
-    expect(state.actionInFlight[LOBBY_ID]).toBe(false);
+    expect(state.actionInFlight[LOBBY_ID]?.join).toBe(false);
     // lobbyId-B should be completely untouched
     expect(state.actionInFlight[LOBBY_ID_B]).toBeUndefined();
     expect(state.errors[LOBBY_ID_B]).toBeUndefined();
@@ -446,16 +481,20 @@ describe("invitePlayer thunk", () => {
       }),
     );
 
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(true);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.invite).toBe(
+      true,
+    );
 
     await dispatchPromise;
 
     expect(callOrder).toEqual(["invitePlayer", "getLobby"]);
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(false);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.invite).toBe(
+      false,
+    );
     expect(store.getState().lobbies.byId[LOBBY_ID]).toEqual(mockLobby);
   });
 
-  it("error path: api failure → thunk rejects; errors[lobbyId] unchanged; actionInFlight[lobbyId] = false", async () => {
+  it("error path: api failure → thunk rejects; errors[lobbyId] unchanged; actionInFlight[lobbyId].invite = false", async () => {
     mockInvitePlayerApi.mockRejectedValue(new Error("invite failed"));
     const store = makeStore();
 
@@ -469,7 +508,9 @@ describe("invitePlayer thunk", () => {
 
     expect(result.meta.requestStatus).toBe("rejected");
     expect(store.getState().lobbies.errors[LOBBY_ID]).toBeUndefined();
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(false);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.invite).toBe(
+      false,
+    );
     expect(mockGetLobby).not.toHaveBeenCalled();
   });
 });
@@ -501,13 +542,15 @@ describe("startGame thunk", () => {
       startGame({ playerId: PLAYER_ID, lobbyId: LOBBY_ID }),
     );
 
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(true);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.start).toBe(true);
 
     const result = await dispatchPromise;
 
     expect(result.meta.requestStatus).toBe("fulfilled");
     expect(callOrder).toEqual(["startGame", "getGame"]);
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(false);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.start).toBe(
+      false,
+    );
     expect(store.getState().games.byId[LOBBY_ID]).toEqual(mockGame);
   });
 
@@ -526,7 +569,9 @@ describe("startGame thunk", () => {
     expect(store.getState().lobbies.errors[LOBBY_ID]).toBeUndefined();
     // Games slice: untouched
     expect(store.getState().games.errors[LOBBY_ID]).toBeUndefined();
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(false);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.start).toBe(
+      false,
+    );
   });
 
   it("error path: startGame api succeeds but fetchGame rejects → thunk resolves successfully; games errors[lobbyId] is set", async () => {
@@ -540,7 +585,9 @@ describe("startGame thunk", () => {
 
     // startGame thunk itself resolves — the action completed server-side
     expect(result.meta.requestStatus).toBe("fulfilled");
-    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]).toBe(false);
+    expect(store.getState().lobbies.actionInFlight[LOBBY_ID]?.start).toBe(
+      false,
+    );
 
     // fetchGame.rejected writes to the games slice errors
     expect(store.getState().games.errors[LOBBY_ID]).toBe("game fetch failed");
@@ -564,7 +611,7 @@ describe("startGame thunk", () => {
       startGame({ playerId: PLAYER_ID, lobbyId: LOBBY_ID }),
     );
 
-    // actionInFlight[LOBBY_ID] = true — second should be dropped by condition
+    // actionInFlight[LOBBY_ID].start = true — second should be dropped by condition
     const second = store.dispatch(
       startGame({ playerId: PLAYER_ID, lobbyId: LOBBY_ID }),
     );

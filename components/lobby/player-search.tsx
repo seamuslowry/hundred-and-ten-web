@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { searchPlayersThunk, invitePlayer } from "@/store/lobbies/thunks";
@@ -18,6 +18,13 @@ export function PlayerSearch({ lobbyId, onInvited }: PlayerSearchProps) {
   const [loading, setLoading] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
 
+  // Sequence counter for in-flight searches. Each new search increments the
+  // counter; when a search resolves, it compares its own ID against the latest
+  // and discards itself if a newer search has been issued. Prevents stale
+  // results from clobbering the latest typed query when network responses
+  // return out of order.
+  const latestSearchIdRef = useRef(0);
+
   // resultIds reference is stable via useState; selectPlayersByIds' size-1
   // cache works because setResultIds is the only writer (new array per search).
   const results = useAppSelector((s) => selectPlayersByIds(s, resultIds));
@@ -27,16 +34,27 @@ export function PlayerSearch({ lobbyId, onInvited }: PlayerSearchProps) {
       setResultIds([]);
       return;
     }
+    const searchId = ++latestSearchIdRef.current;
     setLoading(true);
     try {
       const ids = await dispatch(
         searchPlayersThunk({ playerId: user.uid, searchText: query }),
       ).unwrap();
-      setResultIds(ids);
+      // Only commit results if this is still the latest search.
+      if (searchId === latestSearchIdRef.current) {
+        setResultIds(ids);
+      }
     } catch {
-      setResultIds([]);
+      if (searchId === latestSearchIdRef.current) {
+        setResultIds([]);
+      }
     } finally {
-      setLoading(false);
+      // Only clear the loading flag for the latest search; an out-of-order
+      // earlier rejection should not toggle "loading" off while a fresher
+      // search is still in flight.
+      if (searchId === latestSearchIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [user, query, dispatch]);
 
