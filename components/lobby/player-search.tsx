@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
-import { searchPlayers } from "@/lib/api/players";
-import { invitePlayer } from "@/lib/api/lobbies";
-import type { Player } from "@/lib/api/types";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { searchPlayersThunk, invitePlayer } from "@/store/lobbies/thunks";
+import { selectPlayersByIds } from "@/store/players/selectors";
 
 interface PlayerSearchProps {
   lobbyId: string;
@@ -11,45 +11,61 @@ interface PlayerSearchProps {
 
 export function PlayerSearch({ lobbyId, onInvited }: PlayerSearchProps) {
   const { user } = useAuth();
+  const dispatch = useAppDispatch();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Player[]>([]);
+  const [resultIds, setResultIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
 
+  // Stabilize the IDs reference so selectPlayersByIds' size-1 cache works.
+  const stableIds = useMemo(() => resultIds, [resultIds]);
+  const results = useAppSelector((s) => selectPlayersByIds(s, stableIds));
+
   const search = useCallback(async () => {
     if (!user || query.length < 2) {
-      setResults([]);
+      setResultIds([]);
       return;
     }
     setLoading(true);
     try {
-      const players = await searchPlayers(user.uid, {
-        searchText: query,
-        offset: 0,
-        limit: 10,
-      });
-      setResults(players);
+      const ids = await dispatch(
+        searchPlayersThunk({ playerId: user.uid, searchText: query }),
+      ).unwrap();
+      setResultIds(ids);
     } catch {
-      setResults([]);
+      setResultIds([]);
     } finally {
       setLoading(false);
     }
-  }, [user, query]);
+  }, [user, query, dispatch]);
 
   useEffect(() => {
     const timer = setTimeout(search, 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  async function handleInvite(playerId: string) {
+  async function handleInvite(targetPlayerId: string) {
     if (!user) return;
-    setInviting(playerId);
+    setInviting(targetPlayerId);
     try {
-      await invitePlayer(user.uid, lobbyId, playerId);
+      await dispatch(
+        invitePlayer({
+          playerId: user.uid,
+          lobbyId,
+          inviteeId: targetPlayerId,
+        }),
+      ).unwrap();
       onInvited();
-      setResults((prev) => prev.filter((p) => p.id !== playerId));
-    } catch {
-      // error handled by API client
+      setResultIds((prev) => prev.filter((id) => id !== targetPlayerId));
+    } catch (e) {
+      if (
+        e != null &&
+        typeof e === "object" &&
+        (e as { name?: string }).name === "ConditionError"
+      ) {
+        return;
+      }
+      // error handled by caller via existing pattern
     } finally {
       setInviting(null);
     }

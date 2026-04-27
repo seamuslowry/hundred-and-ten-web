@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { LobbyCard } from "@/components/lobby/lobby-card";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { searchLobbies } from "@/lib/api/lobbies";
-import type { Lobby } from "@/lib/api/types";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchLobbiesList } from "@/store/lobbies/thunks";
+import { selectLobbyList } from "@/store/lobbies/selectors";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/lobbies/")({
@@ -13,38 +14,28 @@ export const Route = createFileRoute("/lobbies/")({
 
 function LobbiesContent() {
   const { user } = useAuth();
-  const [lobbies, setLobbies] = useState<Lobby[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const playerId = user?.uid ?? "";
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!user) return;
+    if (!playerId) return;
+    dispatch(fetchLobbiesList({ playerId }));
+  }, [dispatch, playerId]);
 
-    async function fetchLobbies() {
-      try {
-        const results = await searchLobbies(user!.uid, {
-          searchText: "",
-          offset: 0,
-          limit: 50,
-        });
-        setLobbies(results);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load lobbies");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchLobbies();
-  }, [user]);
+  const lobbies = useAppSelector((s) => selectLobbyList(s));
+  const listLoading = useAppSelector((s) => s.lobbies.listLoading);
+  const listError = useAppSelector((s) => s.lobbies.listError);
 
   // Sort: invites first, then rest
   const inviteLobbies = lobbies.filter((l) =>
-    l.invitees.some((i) => i.id === user?.uid),
+    l.invitees.some((i) => i.id === playerId),
   );
   const otherLobbies = lobbies.filter(
-    (l) => !l.invitees.some((i) => i.id === user?.uid),
+    (l) => !l.invitees.some((i) => i.id === playerId),
   );
+
+  // Loading guard: only show spinner before any data has landed.
+  const showLoading = listLoading && lobbies.length === 0;
 
   return (
     <main className="mx-auto max-w-2xl p-4">
@@ -63,14 +54,16 @@ function LobbiesContent() {
         </Link>
       </div>
 
-      {loading && (
+      {showLoading && (
         <p className="mt-4 text-gray-500 dark:text-gray-400">
           Loading lobbies...
         </p>
       )}
-      {error && <p className="mt-4 text-red-500 dark:text-red-400">{error}</p>}
+      {listError && (
+        <p className="mt-4 text-red-500 dark:text-red-400">{listError}</p>
+      )}
 
-      {!loading && !error && (
+      {!showLoading && !listError && (
         <div className="mt-4 space-y-2">
           {inviteLobbies.map((lobby) => (
             <LobbyCard key={lobby.id} lobby={lobby} isInvite />
