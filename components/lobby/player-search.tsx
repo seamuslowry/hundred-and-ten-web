@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { searchPlayersThunk, invitePlayer } from "@/store/lobbies/thunks";
 import { selectPlayersByIds } from "@/store/players/selectors";
+import { isConditionError } from "@/lib/redux/condition-error";
 
 interface PlayerSearchProps {
   lobbyId: string;
@@ -17,9 +18,9 @@ export function PlayerSearch({ lobbyId, onInvited }: PlayerSearchProps) {
   const [loading, setLoading] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
 
-  // Stabilize the IDs reference so selectPlayersByIds' size-1 cache works.
-  const stableIds = useMemo(() => resultIds, [resultIds]);
-  const results = useAppSelector((s) => selectPlayersByIds(s, stableIds));
+  // resultIds reference is stable via useState; selectPlayersByIds' size-1
+  // cache works because setResultIds is the only writer (new array per search).
+  const results = useAppSelector((s) => selectPlayersByIds(s, resultIds));
 
   const search = useCallback(async () => {
     if (!user || query.length < 2) {
@@ -58,13 +59,7 @@ export function PlayerSearch({ lobbyId, onInvited }: PlayerSearchProps) {
       onInvited();
       setResultIds((prev) => prev.filter((id) => id !== targetPlayerId));
     } catch (e) {
-      if (
-        e != null &&
-        typeof e === "object" &&
-        (e as { name?: string }).name === "ConditionError"
-      ) {
-        return;
-      }
+      if (isConditionError(e)) return;
       // error handled by caller via existing pattern
     } finally {
       setInviting(null);

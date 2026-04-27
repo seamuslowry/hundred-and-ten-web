@@ -78,11 +78,18 @@ export const lobbiesSlice = createSlice({
       });
 
     // ── createLobbyThunk ──────────────────────────────────────────────────────
+    // Creation lifecycle (pending/rejected) is tracked in routes/lobbies/new.tsx
+    // via local `submitting`/`error` state; the slice only records the new lobby
+    // on success. Action errors surface via .unwrap() in the route, not slice errors.
     builder.addCase(createLobbyThunk.fulfilled, (state, action) => {
       const lobby = action.payload;
       state.byId[lobby.id] = lobby;
     });
 
+    // ── joinLobby / invitePlayer / startGame ──────────────────────────────────
+    // Action errors surface via .unwrap() in components, not the slice errors map.
+    // The .rejected reducers only flip actionInFlight; the rejectValue is consumed
+    // by the dispatching component for local actionError state.
     // ── joinLobby ─────────────────────────────────────────────────────────────
     builder
       .addCase(joinLobby.pending, (state, action) => {
