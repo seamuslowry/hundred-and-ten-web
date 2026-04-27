@@ -1,18 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, Link } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { MemberList } from "@/components/lobby/member-list";
 import { PlayerSearch } from "@/components/lobby/player-search";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { useLobbyGameStart } from "@/lib/hooks/use-lobby-game-start";
-import {
-  getLobby,
-  getLobbyPlayers,
-  joinLobby,
-  startGame,
-} from "@/lib/api/lobbies";
-import type { Lobby, Player } from "@/lib/api/types";
+import { useGamePolling } from "@/lib/hooks/use-game-polling";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchLobby, joinLobby, startGame } from "@/store/lobbies/thunks";
+import { selectLobbyById } from "@/store/lobbies/selectors";
+import { selectGameById } from "@/store/games/selectors";
+import { selectPlayersByIds } from "@/store/players/selectors";
 
 export const Route = createFileRoute("/lobbies/$lobbyId")({
   component: LobbyDetail,
@@ -21,96 +19,118 @@ export const Route = createFileRoute("/lobbies/$lobbyId")({
 function LobbyDetailContent() {
   const { lobbyId } = useParams({ from: "/lobbies/$lobbyId" });
   const { user } = useAuth();
+  const playerId = user?.uid ?? "";
   const navigate = useNavigate();
-  const [lobby, setLobby] = useState<Lobby | null>(null);
-  const [playerDetails, setPlayerDetails] = useState<Map<string, Player>>(
-    new Map(),
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  const dispatch = useAppDispatch();
 
-  const { gameStarted } = useLobbyGameStart({ lobbyId });
-
+  // Mount-time fetch
   useEffect(() => {
-    if (gameStarted) {
+    if (!playerId) return;
+    dispatch(fetchLobby({ playerId, lobbyId }));
+  }, [dispatch, playerId, lobbyId]);
+
+  // Polling for game start (reuses PR 1's hook directly with gameId: lobbyId)
+  useGamePolling({ gameId: lobbyId, interval: 5000 });
+
+  // Lobby data from selector
+  const lobby = useAppSelector((s) => selectLobbyById(s, lobbyId));
+
+  // Game data from games slice — this is the navigation signal
+  const game = useAppSelector((s) => selectGameById(s, lobbyId));
+
+  // Player IDs — memoized to keep selectPlayersByIds size-1 cache stable
+  const playerIds = useMemo(
+    () =>
+      lobby
+        ? [...lobby.invitees, ...lobby.players, lobby.organizer].map(
+            (p) => p.id,
+          )
+        : [],
+    [lobby],
+  );
+  const players = useAppSelector((s) => selectPlayersByIds(s, playerIds));
+  const playerDetails = useMemo(
+    () => new Map(players.map((p) => [p.id, p])),
+    [players],
+  );
+
+  // Inline single-consumer derivations from lobbies slice
+  const loading = useAppSelector((s) => s.lobbies.loading[lobbyId] ?? false);
+  const error = useAppSelector((s) => s.lobbies.errors[lobbyId] ?? null);
+  const actionInFlight = useAppSelector(
+    (s) => s.lobbies.actionInFlight[lobbyId] ?? false,
+  );
+
+  // Local action error (per PR 1's error channel separation)
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  // Single navigation signal — when game appears, navigate
+  useEffect(() => {
+    if (game) {
       navigate({ to: "/games/$gameId", params: { gameId: lobbyId } });
     }
-  }, [gameStarted, navigate, lobbyId]);
+  }, [game, lobbyId, navigate]);
 
-  const fetchLobby = useCallback(async () => {
-    if (!user) return;
-    try {
-      const [lobbyData, players] = await Promise.all([
-        getLobby(user.uid, lobbyId),
-        getLobbyPlayers(user.uid, lobbyId),
-      ]);
-      setLobby(lobbyData);
-      setPlayerDetails(new Map(players.map((p) => [p.id, p])));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load lobby");
-    } finally {
-      setLoading(false);
-    }
-  }, [user, lobbyId]);
+  // Re-fetch lobby after PlayerSearch invites
+  const handleInvited = useCallback(() => {
+    if (!playerId) return;
+    dispatch(fetchLobby({ playerId, lobbyId }));
+  }, [dispatch, playerId, lobbyId]);
 
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    async function load() {
-      try {
-        const [lobbyData, players] = await Promise.all([
-          getLobby(user!.uid, lobbyId),
-          getLobbyPlayers(user!.uid, lobbyId),
-        ]);
-        if (cancelled) return;
-        setLobby(lobbyData);
-        setPlayerDetails(new Map(players.map((p) => [p.id, p])));
-      } catch (e) {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Failed to load lobby");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [user, lobbyId]);
-
-  const isOrganizer = lobby?.organizer.id === user?.uid;
-  const isMember =
-    isOrganizer || lobby?.players.some((p) => p.id === user?.uid);
-  const isInvitee = lobby?.invitees.some((p) => p.id === user?.uid);
+  const isOrganizer = lobby?.organizer.id === playerId;
+  const isMember = isOrganizer || lobby?.players.some((p) => p.id === playerId);
+  const isInvitee = lobby?.invitees.some((p) => p.id === playerId);
 
   async function handleJoin() {
-    if (!user) return;
-    setActionLoading(true);
+    if (!playerId) return;
+    setActionError(null);
     try {
-      await joinLobby(user.uid, lobbyId);
-      await fetchLobby();
+      await dispatch(joinLobby({ playerId, lobbyId })).unwrap();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to join lobby");
-    } finally {
-      setActionLoading(false);
+      if (
+        e != null &&
+        typeof e === "object" &&
+        (e as { name?: string }).name === "ConditionError"
+      ) {
+        return;
+      }
+      setActionError(
+        e instanceof Error
+          ? e.message
+          : typeof e === "string"
+            ? e
+            : "Failed to join lobby",
+      );
     }
   }
 
   async function handleStart() {
-    if (!user) return;
-    setActionLoading(true);
+    if (!playerId) return;
+    setActionError(null);
     try {
-      await startGame(user.uid, lobbyId);
-      navigate({ to: "/games/$gameId", params: { gameId: lobbyId } });
+      await dispatch(startGame({ playerId, lobbyId })).unwrap();
+      // No explicit navigate — startGame's internal fetchGame will populate
+      // the games slice, triggering the navigation useEffect above.
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to start game");
-    } finally {
-      setActionLoading(false);
+      if (
+        e != null &&
+        typeof e === "object" &&
+        (e as { name?: string }).name === "ConditionError"
+      ) {
+        return;
+      }
+      setActionError(
+        e instanceof Error
+          ? e.message
+          : typeof e === "string"
+            ? e
+            : "Failed to start game",
+      );
     }
   }
 
-  if (loading) {
+  // Loading guard: only on initial render before data lands
+  if (loading && !lobby) {
     return (
       <main className="mx-auto max-w-md p-4">
         <p className="text-gray-500">Loading lobby...</p>
@@ -118,10 +138,18 @@ function LobbyDetailContent() {
     );
   }
 
-  if (error || !lobby) {
+  if (error && !lobby) {
     return (
       <main className="mx-auto max-w-md p-4">
-        <p className="text-red-500">{error || "Lobby not found"}</p>
+        <p className="text-red-500">{error}</p>
+      </main>
+    );
+  }
+
+  if (!lobby) {
+    return (
+      <main className="mx-auto max-w-md p-4">
+        <p className="text-red-500">Lobby not found</p>
       </main>
     );
   }
@@ -153,31 +181,33 @@ function LobbyDetailContent() {
       {!isMember && (isInvitee || lobby.accessibility === "PUBLIC") && (
         <button
           onClick={handleJoin}
-          disabled={actionLoading}
+          disabled={actionInFlight}
           className="mt-4 w-full rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-50"
           style={{ minHeight: 44 }}
         >
-          {actionLoading ? "Joining..." : "Join Lobby"}
+          {actionInFlight ? "Joining..." : "Join Lobby"}
         </button>
       )}
 
       {isOrganizer && (
         <div className="mt-6 space-y-4">
-          <PlayerSearch lobbyId={lobbyId} onInvited={fetchLobby} />
+          <PlayerSearch lobbyId={lobbyId} onInvited={handleInvited} />
 
           <button
             onClick={handleStart}
-            disabled={actionLoading}
+            disabled={actionInFlight}
             className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             style={{ minHeight: 44 }}
           >
-            {actionLoading ? "Starting..." : "Start Game"}
+            {actionInFlight ? "Starting..." : "Start Game"}
           </button>
         </div>
       )}
 
-      {error && (
-        <p className="mt-2 text-sm text-red-500 dark:text-red-400">{error}</p>
+      {actionError && (
+        <p className="mt-2 text-sm text-red-500 dark:text-red-400">
+          {actionError}
+        </p>
       )}
     </main>
   );
