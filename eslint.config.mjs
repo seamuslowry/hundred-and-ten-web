@@ -1,5 +1,5 @@
 import { defineConfig, globalIgnores } from "eslint/config";
-import react from "eslint-plugin-react";
+import eslintReact from "@eslint-react/eslint-plugin";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
@@ -16,20 +16,15 @@ const eslintConfig = defineConfig([
         sourceType: "module",
       },
     },
+    extends: [eslintReact.configs.recommended],
     plugins: {
-      react,
       "react-hooks": reactHooks,
       "@typescript-eslint": tseslint,
       prettier,
     },
-    settings: {
-      react: { version: "detect" },
-    },
     rules: {
-      ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       ...tseslint.configs.recommended.rules,
-      "react/react-in-jsx-scope": "off",
       "prettier/prettier": "error",
     },
   },
