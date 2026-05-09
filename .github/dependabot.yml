@@ -23,6 +23,15 @@ updates:
         patterns:
           - "vite"
           - "@vitejs/plugin-react"
+      eslint-suite:
+        patterns:
+          - "eslint"
+          - "@typescript-eslint/eslint-plugin"
+          - "@typescript-eslint/parser"
+          - "eslint-config-prettier"
+          - "eslint-plugin-prettier"
+          - "eslint-plugin-react"
+          - "eslint-plugin-react-hooks"
       non-major-development-dependencies:
         dependency-type: "development"
         update-types:
