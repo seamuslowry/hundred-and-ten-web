@@ -9,6 +9,8 @@ vi.mock("@/lib/api/games", () => ({
 
 import { getGame, performAction } from "@/lib/api/games";
 import gamesReducer from "../slice";
+import lobbiesReducer from "@/store/lobbies/slice";
+import playersReducer from "@/store/players/slice";
 import { fetchGame, performGameAction } from "../thunks";
 import type { Game } from "@/lib/api/types";
 
@@ -63,7 +65,13 @@ const mockGameB: Game = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeStore() {
-  return configureStore({ reducer: { games: gamesReducer } });
+  return configureStore({
+    reducer: {
+      games: gamesReducer,
+      lobbies: lobbiesReducer,
+      players: playersReducer,
+    },
+  });
 }
 
 // ─── fetchGame tests ──────────────────────────────────────────────────────────

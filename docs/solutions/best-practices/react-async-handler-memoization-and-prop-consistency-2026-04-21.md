@@ -1,6 +1,7 @@
 ---
 title: "React async handlers: memoization, error safety, prop consistency, and test coverage"
 date: 2026-04-21
+last_updated: 2026-04-26
 category: best-practices
 module: game-page
 problem_type: best_practice
@@ -196,10 +197,12 @@ it("forwards the configured interval to usePolling when waiting for opponent", a
 ## Related
 
 - `components/game/round-header.tsx` — the child component whose optional interface `GameBoard` now matches (`game-status-bar.tsx` was deleted in the 2026-04-24 round-based game view migration)
-- `lib/hooks/use-game-state.ts` — hooks that forward interval to `usePolling`
-- `lib/hooks/__tests__/use-game-state.test.ts` — spy-wrapping mock example for `usePolling`
+- `lib/hooks/use-game-polling.ts` — current polling controller hook that forwards interval to `usePolling` (replaced `use-game-state.ts` in the 2026-04-26 Redux migration; the spy-wrapping test pattern still applies)
 - `routes/games/__tests__/game-page.test.tsx` — error-path test for `handleRefresh`
+- `docs/solutions/architecture-patterns/redux-toolkit-polling-migration-2026-04-26.md` — the Redux migration that replaced `useGameState`; covers `actionInFlight` and `hasError` patterns which are the Redux-layer analogs of the `isRefreshing` stuck-state risk documented here
 
 ## Notes
 
-**ESLint constraint — deriving state that feeds the hook providing the data:** This codebase has custom rules banning `setState` inside `useEffect` and `ref.current` reads/writes during render. When `pollingEnabled` must be derived from game state, but game state comes from `usePolling` (which needs `pollingEnabled` as input), the only lint-compliant approach is React's "adjust state during render" pattern — compare a tracked key to the current one in the render body and call `setState` synchronously when they diverge. React re-runs the component before painting. Do **not** use `useEffect` or `useRef` for this case in this codebase.
+**ESLint constraint — deriving state that feeds the hook providing the data:** This codebase has custom rules banning `setState` inside `useEffect` and `ref.current` reads/writes during render. When `pollingEnabled` must be derived from game state, but game state comes from `usePolling` (which needs `pollingEnabled` as input), the only lint-compliant approach is React's "adjust state during render" pattern — compare a tracked key to the current one in the render body and call `setState` synchronously when they diverge.
+
+**Update (2026-04-26):** After the Redux migration, `useGamePolling` computes `enabled` as a pure derivation from Redux selectors each render — no `useState`-based toggle needed. The "adjust state during render" workaround was specific to `useGameState`'s design where the polling data and the enabled flag were both derived in the same hook. If you're building on top of Redux selectors, derive `enabled` directly; no workaround required.
