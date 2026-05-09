@@ -50,6 +50,9 @@ export function TrickHistory({ tricks, playerNames }: TrickHistoryProps) {
           <div className="flex flex-col-reverse gap-3">
             {completedTricks.map((trick, i) => (
               <div
+                // Tricks have no stable identity outside their order within
+                // the round — index is the correct key here.
+                // eslint-disable-next-line @eslint-react/no-array-index-key
                 key={i}
                 className="rounded border border-gray-100 p-2 dark:border-gray-700"
               >

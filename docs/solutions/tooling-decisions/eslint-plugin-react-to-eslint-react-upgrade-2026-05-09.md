@@ -138,4 +138,5 @@ These warnings (6x `no-array-index-key`, 2x `use-state` lazy-init) were not surf
 
 - GitHub issue #38 — "try different eslint plugin" (closed by PR #40)
 - [ESLint hangs with missing globalIgnores](../developer-experience/eslint-fix-hang-missing-globalignores-2026-04-25.md) — ESLint flat config baseline for this repo
+- [`no-array-index-key` decision rubric](../conventions/no-array-index-key-decision-rubric-2026-05-09.md) — convention used to resolve the 6 `no-array-index-key` warnings produced by the swap
 - [`@eslint-react/eslint-plugin` on npm](https://www.npmjs.com/package/@eslint-react/eslint-plugin)

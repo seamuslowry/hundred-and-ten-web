@@ -22,8 +22,11 @@ export function BidHistoryPanel({
         Bid History
       </p>
       <ul className="flex flex-col gap-1">
-        {bidHistory.map((bid, i) => (
-          <li key={i} className="text-sm text-gray-700 dark:text-gray-200">
+        {bidHistory.map((bid) => (
+          <li
+            key={`${bid.playerId}-${bid.amount}`}
+            className="text-sm text-gray-700 dark:text-gray-200"
+          >
             <span className="font-medium">
               {displayName(bid.playerId, playerNames)}
             </span>

@@ -34,8 +34,12 @@ export function DiscardArea({
                     Your discards
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {value.discarded.map((card, i) => (
-                      <Card key={i} card={card} disabled />
+                    {value.discarded.map((card) => (
+                      <Card
+                        key={`${card.number}-${card.suit}`}
+                        card={card}
+                        disabled
+                      />
                     ))}
                   </div>
                 </div>
@@ -45,8 +49,12 @@ export function DiscardArea({
                       Received
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {value.received.map((card, i) => (
-                        <Card key={i} card={card} disabled />
+                      {value.received.map((card) => (
+                        <Card
+                          key={`${card.number}-${card.suit}`}
+                          card={card}
+                          disabled
+                        />
                       ))}
                     </div>
                   </div>
