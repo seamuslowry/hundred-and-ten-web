@@ -13,12 +13,12 @@ symptoms:
   - "ESLint process must be force-killed; no output or error is produced"
   - "Running with --debug shows ESLint traversing non-source directories (e.g. .infrastructure/.terraform)"
 applies_when:
-  - using ESLint 9 flat config (eslint.config.mjs) with eslint --fix .
+  - using ESLint flat config (eslint.config.mjs) — applies to ESLint 9 and ESLint 10
   - repo contains non-source directories with large or binary files not covered by globalIgnores
   - migrating from ESLint 8 where .eslintignore or .gitignore handled exclusions
 tags:
   - eslint
-  - eslint-9
+  - eslint-10
   - flat-config
   - globalignores
   - terraform
