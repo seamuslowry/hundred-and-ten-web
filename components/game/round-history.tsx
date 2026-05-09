@@ -11,7 +11,7 @@ export function RoundHistory({
   completedRounds,
   playerNames,
 }: RoundHistoryProps) {
-  const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
+  const [expandedSet, setExpandedSet] = useState<Set<number>>(() => new Set());
 
   if (completedRounds.length === 0) return null;
 

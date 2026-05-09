@@ -35,9 +35,9 @@ function CardList({ cards }: { cards: CardType[] }) {
     return <span className="text-xs text-gray-400 dark:text-gray-500">—</span>;
   return (
     <div className="flex flex-wrap gap-1">
-      {cards.map((card, i) => (
+      {cards.map((card) => (
         <span
-          key={`${card.number}-${card.suit}-${i}`}
+          key={`${card.number}-${card.suit}`}
           className={`rounded border border-gray-200 px-1.5 py-0.5 text-xs font-medium dark:border-gray-600 ${cardTextColor(card)}`}
         >
           {cardLabel(card)}
@@ -180,6 +180,9 @@ export function CompletedRoundView({
                 <div className="flex flex-col gap-2">
                   {completedRound.tricks.map((trick, i) => (
                     <div
+                      // Tricks have no stable identity outside their order within
+                      // the round — index is the correct key here.
+                      // eslint-disable-next-line @eslint-react/no-array-index-key
                       key={i}
                       className="rounded border border-gray-100 p-2 dark:border-gray-700"
                     >

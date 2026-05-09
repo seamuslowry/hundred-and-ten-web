@@ -53,7 +53,7 @@ function GameContent() {
   // Keep these as local useState:
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [playerNames, setPlayerNames] = useState<Map<string, string>>(
-    new Map(),
+    () => new Map(),
   );
 
   useEffect(() => {
