@@ -1,7 +1,7 @@
 ---
 title: "refactor: Move source files into src/ folder"
 type: refactor
-status: active
+status: completed
 date: 2026-05-10
 origin: docs/brainstorms/src-folder-migration-requirements.md
 ---
