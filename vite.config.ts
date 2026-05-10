@@ -7,8 +7,8 @@ import path from "path";
 export default defineConfig({
   plugins: [
     tanstackRouter({
-      routesDirectory: "./routes",
-      generatedRouteTree: "./routeTree.gen.ts",
+      routesDirectory: "./src/routes",
+      generatedRouteTree: "./src/routeTree.gen.ts",
       routeFileIgnorePattern: ".test.tsx",
     }),
     react(),
@@ -16,7 +16,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname),
+      "@": path.resolve(__dirname, "src"),
     },
   },
   build: {
@@ -25,6 +25,6 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["./vitest.setup.ts"],
+    setupFiles: ["./src/vitest.setup.ts"],
   },
 });
