@@ -28,6 +28,8 @@ npm run preview    # Preview the dist/ bundle locally
 npm run lint       # ESLint check
 npm run lint:fix   # ESLint autofix
 npm run clean      # Remove dist/ and out/ directories
+npm test           # Run Vitest test suite (single pass)
+npm run test:watch # Run Vitest in watch mode
 ```
 
 ## Conventions
@@ -37,7 +39,7 @@ npm run clean      # Remove dist/ and out/ directories
 - Auth tokens managed in-memory by Firebase SDK
 - Tailwind v4 configured via CSS (`@import 'tailwindcss'` + `@theme` in `src/globals.css`), not `tailwind.config.js`
 - Tailwind uses `@tailwindcss/vite` plugin in `vite.config.ts` (no `postcss.config.js`)
-  - ESLint 10 flat config with prettier
+- ESLint 10 flat config with prettier
 - Mobile-first design — 44px minimum touch targets, horizontal scroll for card hand
 - `src/routeTree.gen.ts` is auto-generated — if you add a new route file, run `npm run dev` or `npm run build` to regenerate it before committing
 
