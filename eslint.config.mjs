@@ -41,7 +41,7 @@ const eslintConfig = defineConfig([
     "dist/**",
     "out/**",
     "build/**",
-    "routeTree.gen.ts",
+    "**/routeTree.gen.ts",
     ".infrastructure/**",
   ]),
 ]);

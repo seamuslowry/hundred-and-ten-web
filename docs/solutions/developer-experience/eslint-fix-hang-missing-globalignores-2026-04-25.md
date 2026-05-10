@@ -24,6 +24,7 @@ tags:
   - terraform
   - hang
   - developer-experience
+last_updated: 2026-05-10
 ---
 
 # ESLint hangs indefinitely when non-source directories are missing from globalIgnores
@@ -58,8 +59,8 @@ globalIgnores([
   "dist/**",
   "out/**",
   "build/**",
-  "routeTree.gen.ts",
-  ".infrastructure/**",  // Terraform state + provider cache (up to 253 MB of binaries)
+  "**/routeTree.gen.ts",  // path-agnostic glob — works whether file is at root or src/
+  ".infrastructure/**",   // Terraform state + provider cache (up to 253 MB of binaries)
 ])
 ```
 
@@ -88,7 +89,7 @@ When `eslint .` runs without ignoring `.infrastructure/`, it recurses into `.ter
      "dist/**",
      "out/**",
      "build/**",
-     "routeTree.gen.ts",       // TanStack Router generated file
+     "**/routeTree.gen.ts",    // TanStack Router generated file — path-agnostic glob covers src/ or root
      ".infrastructure/**",     // Terraform state, plans, and provider cache
    ])
    ```
