@@ -24,11 +24,11 @@
     "react-redux": "^9.3.0"
   },
   "devDependencies": {
-    "@eslint-react/eslint-plugin": "^5.8.1",
+    "@eslint-react/eslint-plugin": "^5.8.4",
     "@fontsource/geist": "^5.2.9",
     "@fontsource/geist-mono": "^5.2.8",
     "@tailwindcss/vite": "^4",
-    "@tanstack/router-plugin": "^1.168.6",
+    "@tanstack/router-plugin": "^1.168.11",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "24.12.2",
@@ -46,6 +46,6 @@
     "tailwindcss": "^4",
     "typescript": "^6",
     "vite": "^8",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   }
 }
