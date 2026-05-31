@@ -24,11 +24,11 @@
     "react-redux": "^9.3.0"
   },
   "devDependencies": {
-    "@eslint-react/eslint-plugin": "^5.8.4",
+    "@eslint-react/eslint-plugin": "^5.8.7",
     "@fontsource/geist": "^5.2.9",
     "@fontsource/geist-mono": "^5.2.8",
     "@tailwindcss/vite": "^4",
-    "@tanstack/router-plugin": "^1.168.11",
+    "@tanstack/router-plugin": "^1.168.13",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "24.12.2",
