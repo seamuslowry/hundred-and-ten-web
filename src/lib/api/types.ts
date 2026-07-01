@@ -89,11 +89,7 @@ export interface SearchRequest {
 export interface ApiEvent {
   sequence: number;
   content:
-    | EnactedBid
-    | EnactedDiscard
-    | EnactedPlay
-    | EnactedSelectTrump
-    | unknown;
+    EnactedBid | EnactedDiscard | EnactedPlay | EnactedSelectTrump | unknown;
 }
 
 export interface DiscardRecord {
