@@ -24,12 +24,12 @@
     "react-redux": "^9.3.0"
   },
   "devDependencies": {
-    "@eslint-react/eslint-plugin": "^5.18.0",
+    "@eslint-react/eslint-plugin": "^5.18.5",
     "@fontsource/geist": "^5.3.0",
     "@fontsource/geist-mono": "^5.3.0",
     "@tailwindcss/vite": "^4",
-    "@tanstack/router-plugin": "^1.168.23",
-    "@testing-library/jest-dom": "^7.0.0",
+    "@tanstack/router-plugin": "^1.168.30",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "24.12.2",
     "@types/react": "^19",
