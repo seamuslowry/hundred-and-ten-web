@@ -37,6 +37,10 @@ updates:
         update-types:
           - minor
           - patch
+      production-minor-dependencies: 
+        dependency-type: "production"
+        update-types:
+          - minor
       production-patch-dependencies:
         dependency-type: "production"
         update-types:
