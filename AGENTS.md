@@ -40,7 +40,7 @@ npm run test:watch # Run Vitest in watch mode
 - Tailwind v4 configured via CSS (`@import 'tailwindcss'` + `@theme` in `src/globals.css`), not `tailwind.config.js`
 - Tailwind uses `@tailwindcss/vite` plugin in `vite.config.ts` (no `postcss.config.js`)
 - ESLint 10 flat config with prettier
-- Mobile-first design — 44px minimum touch targets, horizontal scroll for card hand
+- Mobile-first design — 44px minimum touch targets, card hand wraps onto multiple rows (never scrolls horizontally)
 - `src/routeTree.gen.ts` is auto-generated — if you add a new route file, run `npm run dev` or `npm run build` to regenerate it before committing
 
 ## API Patterns
