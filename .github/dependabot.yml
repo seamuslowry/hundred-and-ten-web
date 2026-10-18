@@ -13,40 +13,38 @@ updates:
     ignore:
       - dependency-name: "@types/node"
     groups:
-      react-suite:
+      # Majors that must move together. Listed first because the first matching group wins.
+      react-major:
+        update-types:
+          - "major"
         patterns:
           - "react"
           - "react-dom"
           - "@types/react"
           - "@types/react-dom"
-      vite-suite:
-        patterns:
-          - "vite"
-          - "@vitejs/plugin-react"
-      eslint-suite:
+      eslint-major:
+        update-types:
+          - "major"
         patterns:
           - "eslint"
-          - "@typescript-eslint/eslint-plugin"
-          - "@typescript-eslint/parser"
-          - "eslint-config-prettier"
-          - "eslint-plugin-prettier"
-          - "eslint-plugin-react"
-          - "eslint-plugin-react-hooks"
-      non-major-development-dependencies:
-        dependency-type: "development"
+          - "eslint-*"
+          - "@eslint/*"
+          - "@eslint-react/*"
+          - "@typescript-eslint/*"
+          - "typescript-eslint"
+      # Everything else that is minor or patch, production and development together
+      minor-and-patch:
         update-types:
-          - minor
-          - patch
-      production-minor-dependencies: 
-        dependency-type: "production"
-        update-types:
-          - minor
-      production-patch-dependencies:
-        dependency-type: "production"
-        update-types:
-          - patch
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"
