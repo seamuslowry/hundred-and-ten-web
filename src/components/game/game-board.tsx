@@ -30,6 +30,7 @@ interface GameBoardProps {
   isCompleted: boolean;
   winner: PlayerInGame | null;
   hand: CardType[];
+  players: PlayerInGame[];
   scores: Record<string, number>;
   playerNames: Map<string, string>;
   myTurn: boolean;
@@ -45,6 +46,7 @@ export function GameBoard({
   isCompleted,
   winner,
   hand,
+  players,
   scores,
   playerNames,
   myTurn,
@@ -86,6 +88,7 @@ export function GameBoard({
           </p>
         </div>
         <ScoreBoard
+          players={players}
           scores={scores}
           currentPlayerId={playerId}
           playerNames={playerNames}
