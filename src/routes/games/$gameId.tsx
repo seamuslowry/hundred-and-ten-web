@@ -115,6 +115,7 @@ function GameContent() {
       </h1>
       <div className="flex flex-col gap-4">
         <ScoreBoard
+          players={game?.players ?? []}
           scores={game?.scores ?? {}}
           currentPlayerId={playerId}
           playerNames={playerNames}
@@ -125,6 +126,7 @@ function GameContent() {
           isCompleted={isCompleted}
           winner={winner}
           hand={hand}
+          players={game?.players ?? []}
           scores={game?.scores ?? {}}
           playerNames={playerNames}
           myTurn={myTurn}

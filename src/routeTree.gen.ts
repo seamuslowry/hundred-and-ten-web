@@ -10,14 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as LobbiesIndexRouteImport } from './routes/lobbies/index'
-import { Route as LobbiesNewRouteImport } from './routes/lobbies/new'
-import { Route as LobbiesLobbyIdRouteImport } from './routes/lobbies/$lobbyId'
 import { Route as GamesGameIdRouteImport } from './routes/games/$gameId'
+import { Route as LobbiesIndexRouteImport } from './routes/lobbies/index'
+import { Route as LobbiesLobbyIdRouteImport } from './routes/lobbies/$lobbyId'
+import { Route as LobbiesNewRouteImport } from './routes/lobbies/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesGameIdRoute = GamesGameIdRouteImport.update({
+  id: '/games/$gameId',
+  path: '/games/$gameId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LobbiesIndexRoute = LobbiesIndexRouteImport.update({
@@ -25,19 +30,14 @@ const LobbiesIndexRoute = LobbiesIndexRouteImport.update({
   path: '/lobbies/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LobbiesNewRoute = LobbiesNewRouteImport.update({
-  id: '/lobbies/new',
-  path: '/lobbies/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LobbiesLobbyIdRoute = LobbiesLobbyIdRouteImport.update({
   id: '/lobbies/$lobbyId',
   path: '/lobbies/$lobbyId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GamesGameIdRoute = GamesGameIdRouteImport.update({
-  id: '/games/$gameId',
-  path: '/games/$gameId',
+const LobbiesNewRoute = LobbiesNewRouteImport.update({
+  id: '/lobbies/new',
+  path: '/lobbies/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -66,11 +66,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/games/$gameId'
-    | '/lobbies/$lobbyId'
-    | '/lobbies/new'
-    | '/lobbies/'
+    '/' | '/games/$gameId' | '/lobbies/$lobbyId' | '/lobbies/new' | '/lobbies/'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/games/$gameId' | '/lobbies/$lobbyId' | '/lobbies/new' | '/lobbies'
   id:
@@ -99,18 +95,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games/$gameId': {
+      id: '/games/$gameId'
+      path: '/games/$gameId'
+      fullPath: '/games/$gameId'
+      preLoaderRoute: typeof GamesGameIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lobbies/': {
       id: '/lobbies/'
       path: '/lobbies'
       fullPath: '/lobbies/'
       preLoaderRoute: typeof LobbiesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lobbies/new': {
-      id: '/lobbies/new'
-      path: '/lobbies/new'
-      fullPath: '/lobbies/new'
-      preLoaderRoute: typeof LobbiesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lobbies/$lobbyId': {
@@ -120,11 +116,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LobbiesLobbyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/games/$gameId': {
-      id: '/games/$gameId'
-      path: '/games/$gameId'
-      fullPath: '/games/$gameId'
-      preLoaderRoute: typeof GamesGameIdRouteImport
+    '/lobbies/new': {
+      id: '/lobbies/new'
+      path: '/lobbies/new'
+      fullPath: '/lobbies/new'
+      preLoaderRoute: typeof LobbiesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
