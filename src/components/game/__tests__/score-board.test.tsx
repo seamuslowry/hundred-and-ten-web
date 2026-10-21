@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { PlayerInGame } from "@/lib/api/types";
 import { ScoreBoard } from "../score-board";
@@ -17,7 +17,7 @@ const names = new Map([
 ]);
 
 describe("ScoreBoard", () => {
-  it("renders names in seat order with scores beneath, regardless of score order", () => {
+  it("lists players in seat order with their scores, regardless of score order", () => {
     render(
       <ScoreBoard
         players={players}
@@ -26,27 +26,22 @@ describe("ScoreBoard", () => {
         playerNames={names}
       />,
     );
-    const [header, body] = screen.getAllByRole("row");
-    expect(
-      within(header)
-        .getAllByRole("columnheader")
-        .map((c) => c.textContent),
-    ).toEqual(["Ann", "Bob (you)", "Cy", "Di"]);
-    expect(
-      within(body)
-        .getAllByRole("cell")
-        .map((c) => c.textContent),
-    ).toEqual(["-5", "10", "30", "50"]);
+    expect(screen.getAllByRole("term").map((c) => c.textContent)).toEqual([
+      "Ann",
+      "Bob (you)",
+      "Cy",
+      "Di",
+    ]);
+    expect(screen.getAllByRole("definition").map((c) => c.textContent)).toEqual(
+      ["-5", "10", "30", "50"],
+    );
   });
 
   it("shows 0 for players without a score yet", () => {
     render(<ScoreBoard players={players} scores={{}} currentPlayerId="p1" />);
-    expect(screen.getAllByRole("cell").map((c) => c.textContent)).toEqual([
-      "0",
-      "0",
-      "0",
-      "0",
-    ]);
+    expect(screen.getAllByRole("definition").map((c) => c.textContent)).toEqual(
+      ["0", "0", "0", "0"],
+    );
   });
 
   it("renders nothing without players", () => {
