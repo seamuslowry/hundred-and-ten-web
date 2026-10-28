@@ -120,6 +120,7 @@ function renderWithStore(
             byId: {},
             loading: {},
             actionInFlight: {},
+            leaveInFlight: {},
             errors: {},
             ...initialState.games,
           },
@@ -131,6 +132,7 @@ function renderWithStore(
             errors: {},
             listError: null,
             actionInFlight: {},
+            leaveInFlight: {},
             ...initialState.lobbies,
           },
           players: {

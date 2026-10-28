@@ -22,3 +22,17 @@ export function getGamePlayers(
 export function getGame(playerId: string, gameId: string): Promise<Game> {
   return apiFetch(`/players/${playerId}/games/${gameId}`);
 }
+
+/**
+ * Leave a game. The backend replaces the leaving player with a CPU so the
+ * game can continue for the remaining players.
+ */
+export function leaveGame(
+  playerId: string,
+  gameId: string,
+): Promise<ApiEvent[]> {
+  return apiFetch(`/players/${playerId}/games/${gameId}/players`, {
+    method: "POST",
+    body: JSON.stringify({ type: "LEAVE" }),
+  });
+}

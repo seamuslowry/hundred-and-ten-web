@@ -5,17 +5,23 @@ import { configureStore } from "@reduxjs/toolkit";
 vi.mock("@/lib/api/games", () => ({
   getGame: vi.fn(),
   performAction: vi.fn(),
+  leaveGame: vi.fn(),
 }));
 
-import { getGame, performAction } from "@/lib/api/games";
+import {
+  getGame,
+  performAction,
+  leaveGame as leaveGameApi,
+} from "@/lib/api/games";
 import gamesReducer from "../slice";
 import lobbiesReducer from "@/store/lobbies/slice";
 import playersReducer from "@/store/players/slice";
-import { fetchGame, performGameAction } from "../thunks";
+import { fetchGame, performGameAction, leaveGame } from "../thunks";
 import type { Game } from "@/lib/api/types";
 
 const mockGetGame = vi.mocked(getGame);
 const mockPerformAction = vi.mocked(performAction);
+const mockLeaveGameApi = vi.mocked(leaveGameApi);
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -301,5 +307,79 @@ describe("performGameAction thunk", () => {
     expect(state.byId[GAME_ID_B]).toEqual(mockGameB);
     expect(state.errors[GAME_ID_B]).toBeNull(); // cleared when game B was loaded
     expect(state.loading[GAME_ID_B]).toBe(false);
+  });
+});
+
+// ─── leaveGame tests ──────────────────────────────────────────────────────────
+
+describe("leaveGame thunk", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("happy path: calls the API and drops the game from byId", async () => {
+    mockGetGame.mockResolvedValue(mockGame);
+    mockLeaveGameApi.mockResolvedValue([]);
+    const store = makeStore();
+    await store.dispatch(fetchGame({ playerId: PLAYER_ID, gameId: GAME_ID }));
+    expect(store.getState().games.byId[GAME_ID]).toBeDefined();
+
+    const result = await store.dispatch(
+      leaveGame({ playerId: PLAYER_ID, gameId: GAME_ID }),
+    );
+
+    expect(leaveGame.fulfilled.match(result)).toBe(true);
+    expect(mockLeaveGameApi).toHaveBeenCalledWith(PLAYER_ID, GAME_ID);
+    const state = store.getState().games;
+    expect(state.byId[GAME_ID]).toBeUndefined();
+    expect(state.leaveInFlight[GAME_ID]).toBe(false);
+  });
+
+  it("error path: rejects with the API message and keeps the game cached", async () => {
+    mockGetGame.mockResolvedValue(mockGame);
+    mockLeaveGameApi.mockRejectedValue(new Error("Not in game"));
+    const store = makeStore();
+    await store.dispatch(fetchGame({ playerId: PLAYER_ID, gameId: GAME_ID }));
+
+    const result = await store.dispatch(
+      leaveGame({ playerId: PLAYER_ID, gameId: GAME_ID }),
+    );
+
+    expect(leaveGame.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe("Not in game");
+    const state = store.getState().games;
+    expect(state.byId[GAME_ID]).toEqual(mockGame);
+    expect(state.leaveInFlight[GAME_ID]).toBe(false);
+  });
+
+  it("dedup: a second dispatch while one is in flight is cancelled", async () => {
+    let resolveLeave!: () => void;
+    mockLeaveGameApi.mockReturnValue(
+      new Promise((resolve) => {
+        resolveLeave = () => resolve([]);
+      }),
+    );
+    const store = makeStore();
+
+    const first = store.dispatch(
+      leaveGame({ playerId: PLAYER_ID, gameId: GAME_ID }),
+    );
+    expect(store.getState().games.leaveInFlight[GAME_ID]).toBe(true);
+    const second = await store.dispatch(
+      leaveGame({ playerId: PLAYER_ID, gameId: GAME_ID }),
+    );
+
+    expect(leaveGame.rejected.match(second)).toBe(true);
+    if (leaveGame.rejected.match(second)) {
+      expect(second.meta.condition).toBe(true);
+    }
+
+    resolveLeave();
+    await first;
+    expect(mockLeaveGameApi).toHaveBeenCalledTimes(1);
   });
 });
