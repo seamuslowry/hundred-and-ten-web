@@ -1,5 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getGame, performAction } from "@/lib/api/games";
+import {
+  getGame,
+  performAction,
+  leaveGame as leaveGameApi,
+} from "@/lib/api/games";
 import type { GameAction, Game } from "@/lib/api/types";
 import type { RootState } from "@/store";
 
@@ -46,6 +50,34 @@ export const performGameAction = createAsyncThunk<
      */
     condition({ gameId }, { getState }) {
       return !getState().games.actionInFlight[gameId];
+    },
+  },
+);
+
+// ─── leaveGame ────────────────────────────────────────────────────────────────
+
+/**
+ * Leave a game. On success the game is dropped from the store; callers are
+ * expected to navigate away (the backend automates the departed seat).
+ */
+export const leaveGame = createAsyncThunk<
+  void,
+  { playerId: string; gameId: string },
+  { state: RootState; rejectValue: string }
+>(
+  "games/leaveGame",
+  async ({ playerId, gameId }, { rejectWithValue }) => {
+    try {
+      await leaveGameApi(playerId, gameId);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unknown error leaving game";
+      return rejectWithValue(message);
+    }
+  },
+  {
+    condition({ gameId }, { getState }) {
+      return !getState().games.leaveInFlight[gameId];
     },
   },
 );

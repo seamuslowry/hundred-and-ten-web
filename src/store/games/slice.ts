@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchGame, performGameAction } from "./thunks";
+import { fetchGame, performGameAction, leaveGame } from "./thunks";
 import type { Game } from "@/lib/api/types";
 
 export interface GamesState {
@@ -7,6 +7,8 @@ export interface GamesState {
   loading: Record<string, boolean>;
   /** Tracks in-flight performGameAction calls per gameId. Used by condition() for dedup. */
   actionInFlight: Record<string, boolean>;
+  /** Tracks in-flight leaveGame calls per gameId. Used by condition() for dedup. */
+  leaveInFlight: Record<string, boolean>;
   errors: Record<string, string | null>;
 }
 
@@ -14,6 +16,7 @@ const initialState: GamesState = {
   byId: {},
   loading: {},
   actionInFlight: {},
+  leaveInFlight: {},
   errors: {},
 };
 
@@ -47,6 +50,20 @@ export const gamesSlice = createSlice({
       })
       .addCase(performGameAction.rejected, (state, action) => {
         state.actionInFlight[action.meta.arg.gameId] = false;
+      })
+      // leaveGame lifecycle — drops the game from the store on success
+      .addCase(leaveGame.pending, (state, action) => {
+        state.leaveInFlight[action.meta.arg.gameId] = true;
+      })
+      .addCase(leaveGame.fulfilled, (state, action) => {
+        const gameId = action.meta.arg.gameId;
+        state.leaveInFlight[gameId] = false;
+        delete state.byId[gameId];
+        delete state.errors[gameId];
+        delete state.loading[gameId];
+      })
+      .addCase(leaveGame.rejected, (state, action) => {
+        state.leaveInFlight[action.meta.arg.gameId] = false;
       });
   },
 });

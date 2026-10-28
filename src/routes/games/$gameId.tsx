@@ -3,6 +3,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { GameBoard } from "@/components/game/game-board";
 import { ScoreBoard } from "@/components/game/score-board";
 import { RoundHistory } from "@/components/game/round-history";
+import { LeaveGameButton } from "@/components/game/leave-game-button";
 import { useGamePolling } from "@/lib/hooks/use-game-polling";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useAppSelector } from "@/store/hooks";
@@ -49,6 +50,11 @@ function GameContent() {
       : null;
   const phase = activeRound?.status ?? null;
   const isStale = errorMsg !== null && game !== undefined;
+  // Only humans still seated in an unfinished game can leave.
+  const canLeave =
+    !isCompleted &&
+    (game?.players.some((p) => p.id === playerId && p.type === "human") ??
+      false);
 
   // Keep these as local useState:
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -110,9 +116,12 @@ function GameContent() {
       >
         &larr; Back to lobbies
       </Link>
-      <h1 className="mb-4 text-2xl font-bold dark:text-gray-100">
-        Game {gameId.slice(0, 8)}
-      </h1>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold dark:text-gray-100">
+          Game {gameId.slice(0, 8)}
+        </h1>
+        {canLeave && <LeaveGameButton gameId={gameId} playerId={playerId} />}
+      </div>
       <div className="flex flex-col gap-4">
         <ScoreBoard
           players={game?.players ?? []}
