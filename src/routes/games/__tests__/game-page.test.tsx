@@ -27,6 +27,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   return {
     ...actual,
     useParams: vi.fn().mockReturnValue({ gameId: "game-abc" }),
+    useNavigate: vi.fn(),
     Link: ({
       children,
       ...props
@@ -49,6 +50,7 @@ vi.mock("@/lib/api/games", () => ({
   getGame: vi.fn(),
   getGamePlayers: vi.fn().mockResolvedValue([]),
   performAction: vi.fn(),
+  leaveGame: vi.fn(),
 }));
 
 vi.mock("@/components/game/score-board", () => ({
@@ -172,12 +174,20 @@ vi.mock("@/components/game/game-board", async () => {
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import { useAuth } from "@/lib/hooks/use-auth";
-import { getGame, performAction, getGamePlayers } from "@/lib/api/games";
+import {
+  getGame,
+  performAction,
+  getGamePlayers,
+  leaveGame as leaveGameApi,
+} from "@/lib/api/games";
+import { useNavigate } from "@tanstack/react-router";
 
 const mockUseAuth = vi.mocked(useAuth);
 const mockGetGame = vi.mocked(getGame);
 const mockPerformAction = vi.mocked(performAction);
 const mockGetGamePlayers = vi.mocked(getGamePlayers);
+const mockLeaveGameApi = vi.mocked(leaveGameApi);
+const mockUseNavigate = vi.mocked(useNavigate);
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -259,6 +269,7 @@ function renderWithStore(
             byId: {},
             loading: {},
             actionInFlight: {},
+            leaveInFlight: {},
             errors: {},
             ...initialGames,
           },
@@ -292,6 +303,9 @@ describe("GamePage", () => {
     mockGetGame.mockResolvedValue(mockGame as never);
     mockGetGamePlayers.mockResolvedValue([]);
     mockPerformAction.mockResolvedValue([]);
+    mockUseNavigate.mockReturnValue(
+      vi.fn() as unknown as ReturnType<typeof useNavigate>,
+    );
   });
 
   afterEach(() => {
@@ -650,5 +664,117 @@ describe("GamePage action error semantics (Key Technical Decisions §6)", () => 
     await waitFor(() => {
       expect(mockPerformAction).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+// ─── Leave game ───────────────────────────────────────────────────────────────
+
+describe("GamePage leave game", () => {
+  let mockNavigate: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    setupAuth();
+    mockGetGame.mockResolvedValue(mockGame as never);
+    mockGetGamePlayers.mockResolvedValue([]);
+    mockLeaveGameApi.mockResolvedValue([]);
+    mockNavigate = vi.fn();
+    mockUseNavigate.mockReturnValue(
+      mockNavigate as unknown as ReturnType<typeof useNavigate>,
+    );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it("shows a Leave game button for a seated human in an active game", async () => {
+    renderWithStore(<GamePage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Leave game" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("hides the Leave game button when the game is completed", async () => {
+    mockGetGame.mockResolvedValue(mockCompletedGame as never);
+
+    renderWithStore(<GamePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Game Over/)).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole("button", { name: "Leave game" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the Leave game button when the current user is not a player", async () => {
+    setupAuth("spectator-uid");
+
+    renderWithStore(<GamePage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("score-board")).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole("button", { name: "Leave game" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("requires confirmation, then calls the API and navigates to /lobbies", async () => {
+    renderWithStore(<GamePage />);
+
+    const leaveBtn = await screen.findByRole("button", { name: "Leave game" });
+    fireEvent.click(leaveBtn);
+
+    // Nothing sent yet — confirmation shown
+    expect(mockLeaveGameApi).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("group", { name: "Confirm leave game" }),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, leave" }));
+    });
+
+    await waitFor(() => {
+      expect(mockLeaveGameApi).toHaveBeenCalledWith(PLAYER_ID, GAME_ID);
+    });
+    expect(mockNavigate).toHaveBeenCalledWith({ to: "/lobbies" });
+  });
+
+  it("cancel hides the confirmation without calling the API", async () => {
+    renderWithStore(<GamePage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Leave game" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(mockLeaveGameApi).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: "Leave game" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an error and stays on the page when leaving fails", async () => {
+    mockLeaveGameApi.mockRejectedValue(new Error("Not in game"));
+
+    renderWithStore(<GamePage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Leave game" }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, leave" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Failed to leave game: Not in game",
+      );
+    });
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.getByTestId("score-board")).toBeInTheDocument();
   });
 });
