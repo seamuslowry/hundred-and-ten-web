@@ -159,10 +159,10 @@ function LobbyDetailContent() {
   return (
     <main className="mx-auto max-w-md p-4">
       <Link
-        to="/lobbies"
+        to="/"
         className="mb-3 inline-flex min-h-[44px] items-center text-sm text-blue-600 hover:underline"
       >
-        &larr; Back to lobbies
+        &larr; Home
       </Link>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold dark:text-gray-100">{lobby.name}</h1>

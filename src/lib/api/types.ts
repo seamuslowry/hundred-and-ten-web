@@ -86,6 +86,16 @@ export interface SearchRequest {
   limit: number;
 }
 
+export type GameStatus =
+  "BIDDING" | "TRUMP_SELECTION" | "DISCARD" | "TRICKS" | "WON";
+
+export interface SearchGamesRequest extends SearchRequest {
+  statuses?: GameStatus[];
+  /** Restricts to games where this player is the one to act next. */
+  activePlayer?: string;
+  winner?: string;
+}
+
 export interface ApiEvent {
   sequence: number;
   content:

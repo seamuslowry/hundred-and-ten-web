@@ -121,10 +121,10 @@ function GameContent() {
   return (
     <main className="mx-auto w-full max-w-2xl p-4 md:max-w-4xl lg:max-w-6xl">
       <Link
-        to="/lobbies"
+        to="/"
         className="mb-3 inline-flex min-h-[44px] items-center text-sm text-blue-600 hover:underline"
       >
-        &larr; Back to lobbies
+        &larr; Home
       </Link>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold dark:text-gray-100">

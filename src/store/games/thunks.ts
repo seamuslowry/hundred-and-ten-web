@@ -1,10 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   getGame,
+  searchGames,
   performAction,
   leaveGame as leaveGameApi,
 } from "@/lib/api/games";
-import type { GameAction, Game } from "@/lib/api/types";
+import type { GameAction, Game, GameStatus } from "@/lib/api/types";
 import type { RootState } from "@/store";
 
 // ─── fetchGame ────────────────────────────────────────────────────────────────
@@ -15,6 +16,34 @@ export const fetchGame = createAsyncThunk<
 >("games/fetchGame", async ({ playerId, gameId }) => {
   const game = await getGame(playerId, gameId);
   return { gameId, game };
+});
+
+// ─── fetchGamesList ───────────────────────────────────────────────────────────
+
+/** Statuses of games that are still being played. */
+export const ONGOING_GAME_STATUSES: GameStatus[] = [
+  "BIDDING",
+  "TRUMP_SELECTION",
+  "DISCARD",
+  "TRICKS",
+];
+
+/**
+ * Fetch ongoing games the player is part of. The search endpoint also returns
+ * other people's public games, so membership is filtered client-side.
+ */
+export const fetchGamesList = createAsyncThunk<
+  { games: Game[] },
+  { playerId: string }
+>("games/fetchGamesList", async ({ playerId }) => {
+  const results = await searchGames(playerId, {
+    searchText: "",
+    offset: 0,
+    limit: 50,
+    statuses: ONGOING_GAME_STATUSES,
+  });
+  const games = results.filter((g) => g.players.some((p) => p.id === playerId));
+  return { games };
 });
 
 // ─── performGameAction ────────────────────────────────────────────────────────

@@ -9,7 +9,7 @@ export function AppHeader() {
   return (
     <header className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
       <nav className="flex items-center justify-between">
-        <Link to="/lobbies" className="text-lg font-bold dark:text-gray-100">
+        <Link to="/" className="text-lg font-bold dark:text-gray-100">
           Hundred and Ten
         </Link>
         <div className="flex items-center gap-3">

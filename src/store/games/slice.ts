@@ -1,9 +1,20 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchGame, performGameAction, leaveGame } from "./thunks";
+import {
+  fetchGame,
+  fetchGamesList,
+  performGameAction,
+  leaveGame,
+} from "./thunks";
 import type { Game } from "@/lib/api/types";
 
 export interface GamesState {
   byId: Record<string, Game>;
+  /** Ordered IDs of the player's ongoing games from fetchGamesList. */
+  list: string[];
+  /** Loading flag for fetchGamesList. */
+  listLoading: boolean;
+  /** Error from fetchGamesList. */
+  listError: string | null;
   loading: Record<string, boolean>;
   /** Tracks in-flight performGameAction calls per gameId. Used by condition() for dedup. */
   actionInFlight: Record<string, boolean>;
@@ -14,6 +25,9 @@ export interface GamesState {
 
 const initialState: GamesState = {
   byId: {},
+  list: [],
+  listLoading: false,
+  listError: null,
   loading: {},
   actionInFlight: {},
   leaveInFlight: {},
@@ -26,6 +40,23 @@ export const gamesSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // fetchGamesList lifecycle
+      .addCase(fetchGamesList.pending, (state) => {
+        state.listLoading = true;
+      })
+      .addCase(fetchGamesList.fulfilled, (state, action) => {
+        const { games } = action.payload;
+        for (const game of games) {
+          state.byId[game.id] = game;
+        }
+        state.list = games.map((g) => g.id);
+        state.listError = null;
+        state.listLoading = false;
+      })
+      .addCase(fetchGamesList.rejected, (state, action) => {
+        state.listError = action.error.message ?? "Failed to load games";
+        state.listLoading = false;
+      })
       // fetchGame lifecycle
       .addCase(fetchGame.pending, (state, action) => {
         state.loading[action.meta.arg.gameId] = true;

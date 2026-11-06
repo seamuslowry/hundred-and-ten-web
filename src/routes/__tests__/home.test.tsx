@@ -9,16 +9,21 @@ import playersReducer from "@/store/players/slice";
 import type { GamesState } from "@/store/games/slice";
 import type { LobbiesState } from "@/store/lobbies/slice";
 import type { PlayersState } from "@/store/players/slice";
-import type { Lobby } from "@/lib/api/types";
-import { LobbiesPage } from "../index";
+import type { Game, Lobby } from "@/lib/api/types";
+import { Home } from "../index";
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
+
+const mockNavigate = vi.hoisted(() => vi.fn());
+const mockSearch = vi.hoisted(() => ({}) as Record<string, unknown>);
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
+    useNavigate: () => mockNavigate,
+    useSearch: () => mockSearch,
     Link: ({
       children,
       to,
@@ -39,8 +44,8 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("@/components/auth/require-auth", () => ({
-  RequireAuth: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+vi.mock("@/components/auth/sign-in-button", () => ({
+  SignInButton: () => <button>Sign in</button>,
 }));
 
 vi.mock("@/lib/hooks/use-auth", () => ({
@@ -63,15 +68,18 @@ vi.mock("@/lib/api/players", () => ({
 
 vi.mock("@/lib/api/games", () => ({
   getGame: vi.fn(),
+  searchGames: vi.fn(),
 }));
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import { useAuth } from "@/lib/hooks/use-auth";
 import { searchLobbies } from "@/lib/api/lobbies";
+import { searchGames } from "@/lib/api/games";
 
 const mockUseAuth = vi.mocked(useAuth);
 const mockSearchLobbies = vi.mocked(searchLobbies);
+const mockSearchGames = vi.mocked(searchGames);
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -98,6 +106,46 @@ const otherLobby: Lobby = {
   invitees: [],
 };
 
+const myTurnGame: Game = {
+  id: "game-mine",
+  name: "My Turn Game",
+  players: [
+    { id: PLAYER_ID, type: "human" },
+    { id: OTHER_PLAYER_ID, type: "human" },
+  ],
+  scores: {},
+  active: {
+    status: "BIDDING",
+    dealerPlayerId: OTHER_PLAYER_ID,
+    bidHistory: [],
+    bid: null,
+    hands: {},
+    trump: null,
+    discards: {},
+    tricks: [],
+    activePlayerId: PLAYER_ID,
+    queuedActions: [],
+  },
+  completedRounds: [],
+};
+
+const waitingGame: Game = {
+  ...myTurnGame,
+  id: "game-waiting",
+  name: "Waiting Game",
+  active: {
+    ...(myTurnGame.active as object),
+    activePlayerId: OTHER_PLAYER_ID,
+  } as Game["active"],
+};
+
+const strangerGame: Game = {
+  ...myTurnGame,
+  id: "game-stranger",
+  name: "Stranger Game",
+  players: [{ id: OTHER_PLAYER_ID, type: "human" }],
+};
+
 // ─── renderWithStore helper ───────────────────────────────────────────────────
 
 function renderWithStore(
@@ -118,6 +166,9 @@ function renderWithStore(
       ? {
           games: {
             byId: {},
+            list: [],
+            listLoading: false,
+            listError: null,
             loading: {},
             actionInFlight: {},
             leaveInFlight: {},
@@ -162,9 +213,10 @@ function setupAuth(uid: string | null = PLAYER_ID) {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe("LobbiesPage (lobby list)", () => {
+describe("Home (games and lobbies)", () => {
   beforeEach(() => {
     setupAuth();
+    mockSearchGames.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -174,7 +226,7 @@ describe("LobbiesPage (lobby list)", () => {
   it("shows loading state on initial render and renders lobby cards after fetch (invitees first)", async () => {
     mockSearchLobbies.mockResolvedValue([otherLobby, inviteLobby]);
 
-    renderWithStore(<LobbiesPage />);
+    renderWithStore(<Home />);
 
     // Loading state visible immediately (listLoading = true, no lobbies yet)
     expect(screen.getByText("Loading lobbies...")).toBeInTheDocument();
@@ -202,7 +254,7 @@ describe("LobbiesPage (lobby list)", () => {
   it("renders empty state when searchLobbies returns []", async () => {
     mockSearchLobbies.mockResolvedValue([]);
 
-    renderWithStore(<LobbiesPage />);
+    renderWithStore(<Home />);
 
     await waitFor(() => {
       expect(
@@ -214,10 +266,86 @@ describe("LobbiesPage (lobby list)", () => {
   it("renders error message when searchLobbies rejects", async () => {
     mockSearchLobbies.mockRejectedValue(new Error("Network down"));
 
-    renderWithStore(<LobbiesPage />);
+    renderWithStore(<Home />);
 
     await waitFor(() => {
       expect(screen.getByText("Network down")).toBeInTheDocument();
     });
+  });
+
+  it("shows the player's ongoing games alongside lobbies", async () => {
+    mockSearchLobbies.mockResolvedValue([otherLobby]);
+    mockSearchGames.mockResolvedValue([myTurnGame, waitingGame, strangerGame]);
+
+    renderWithStore(<Home />);
+
+    await waitFor(() => {
+      expect(screen.getByText("My Turn Game")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Waiting Game")).toBeInTheDocument();
+    expect(screen.queryByText("Stranger Game")).toBeNull();
+    expect(screen.getByText("Other Lobby")).toBeInTheDocument();
+
+    // Only the game where it is the player's move gets the badge
+    expect(screen.getAllByText("Your turn")).toHaveLength(1);
+    expect(screen.getByText("My Turn Game").closest("a")).toHaveAttribute(
+      "href",
+      "/games/game-mine",
+    );
+  });
+
+  it("shows an empty state when the player has no ongoing games", async () => {
+    mockSearchLobbies.mockResolvedValue([otherLobby]);
+    mockSearchGames.mockResolvedValue([]);
+
+    renderWithStore(<Home />);
+
+    await waitFor(() => {
+      expect(screen.getByText("No games in progress.")).toBeInTheDocument();
+    });
+  });
+
+  it("still shows lobbies when loading games fails", async () => {
+    mockSearchLobbies.mockResolvedValue([otherLobby]);
+    mockSearchGames.mockRejectedValue(new Error("games down"));
+
+    renderWithStore(<Home />);
+
+    await waitFor(() => {
+      expect(screen.getByText("games down")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Other Lobby")).toBeInTheDocument();
+  });
+
+  it("shows the sign-in button instead of games when signed out", () => {
+    setupAuth(null);
+
+    renderWithStore(<Home />);
+
+    expect(screen.getByText("Sign in")).toBeInTheDocument();
+    expect(screen.queryByText("Games")).toBeNull();
+    expect(mockSearchGames).not.toHaveBeenCalled();
+  });
+
+  it('labels the games section simply "Games"', async () => {
+    mockSearchLobbies.mockResolvedValue([]);
+
+    renderWithStore(<Home />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Games" }),
+    ).toBeInTheDocument();
+  });
+
+  it("redirects to returnTo after sign-in instead of rendering home", async () => {
+    mockSearch.returnTo = "/games/abc";
+
+    renderWithStore(<Home />);
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith({ to: "/games/abc" });
+    });
+    expect(screen.queryByText("Games")).toBeNull();
+    delete mockSearch.returnTo;
   });
 });
