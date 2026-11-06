@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
 
 permissions:
   id-token: write
@@ -12,9 +16,13 @@ permissions:
 
 env:
   SWA_NAME: hundredandten-web
+  # Preview hostname, per https://learn.microsoft.com/azure/static-web-apps/preview-environments
+  PREVIEW_HOST: ${{ vars.SWA_PREVIEW_HOST_PREFIX }}-${{ github.event.pull_request.number }}.${{ vars.SWA_PREVIEW_HOST_SUFFIX }}
+  FIREBASE_CONFIG_URL: https://identitytoolkit.googleapis.com/admin/v2/projects/${{ vars.FIREBASE_PROJECT_ID }}/config
 
 jobs:
   build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
@@ -38,7 +46,7 @@ jobs:
               --query properties.apiKey \
               -o tsv)
             echo "token=$TOKEN" >> $GITHUB_OUTPUT
-      
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -50,3 +58,70 @@ jobs:
           app_location: "." # App source code path relative to repository root - optional
           output_location: "dist" # Built app content directory, relative to app_location - optional
           ###### End of Repository/Build Configurations ######
+
+      - name: 'GCP Login via OIDC'
+        if: github.event_name == 'pull_request'
+        id: gcp_login
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          create_credentials_file: false
+
+      - name: Authorize preview domain in Firebase Auth
+        if: github.event_name == 'pull_request'
+        env:
+          AUTH: Bearer ${{ steps.gcp_login.outputs.access_token }}
+        run: |
+          BODY=$(curl -fsS -H "Authorization: $AUTH" "$FIREBASE_CONFIG_URL" \
+            | jq -c --arg h "$PREVIEW_HOST" '{authorizedDomains: (.authorizedDomains + [$h] | unique)}')
+          curl -fsS -X PATCH -H "Authorization: $AUTH" -H "Content-Type: application/json" \
+            -d "$BODY" "$FIREBASE_CONFIG_URL?updateMask=authorizedDomains" > /dev/null
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: 'Az CLI Login via OIDC'
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get SWA Token
+        id: swa_token
+        uses: azure/CLI@v3
+        with:
+          inlineScript: |
+            TOKEN=$(az staticwebapp secrets list \
+              -n $SWA_NAME \
+              --query properties.apiKey \
+              -o tsv)
+            echo "token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Tear down preview
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.swa_token.outputs.token }}
+          action: "close"
+
+      - name: 'GCP Login via OIDC'
+        id: gcp_login
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          create_credentials_file: false
+
+      - name: Remove preview domain from Firebase Auth
+        env:
+          AUTH: Bearer ${{ steps.gcp_login.outputs.access_token }}
+        run: |
+          BODY=$(curl -fsS -H "Authorization: $AUTH" "$FIREBASE_CONFIG_URL" \
+            | jq -c --arg h "$PREVIEW_HOST" '{authorizedDomains: (.authorizedDomains - [$h])}')
+          curl -fsS -X PATCH -H "Authorization: $AUTH" -H "Content-Type: application/json" \
+            -d "$BODY" "$FIREBASE_CONFIG_URL?updateMask=authorizedDomains" > /dev/null
