@@ -91,6 +91,7 @@ function makeState(gamesState: Partial<GamesState> = {}): RootState {
     byId: {},
     loading: {},
     actionInFlight: {},
+    leaveInFlight: {},
     errors: {},
     ...gamesState,
   };
@@ -115,6 +116,7 @@ describe("gamesSlice reducer", () => {
       byId: {},
       loading: {},
       actionInFlight: {},
+      leaveInFlight: {},
       errors: {},
     });
   });

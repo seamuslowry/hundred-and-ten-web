@@ -9,7 +9,7 @@ vi.mock("../client", () => ({
 }));
 
 import { apiFetch } from "../client";
-import { getGame } from "../games";
+import { getGame, leaveGame } from "../games";
 
 const mockApiFetch = vi.mocked(apiFetch);
 
@@ -48,5 +48,36 @@ describe("getGame", () => {
     const result = await getGame("player-123", "game-456");
 
     expect(result).toEqual(mockGame);
+  });
+});
+
+describe("leaveGame", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_API_URL", "https://api.example.com");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it("POSTs a LEAVE request to the game players endpoint", async () => {
+    mockApiFetch.mockResolvedValue([] as never);
+
+    await leaveGame("player-123", "game-456");
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      "/players/player-123/games/game-456/players",
+      { method: "POST", body: JSON.stringify({ type: "LEAVE" }) },
+    );
+  });
+
+  it("returns the Event[] response from apiFetch", async () => {
+    const events = [{ sequence: 1, content: {} }];
+    mockApiFetch.mockResolvedValue(events as never);
+
+    const result = await leaveGame("player-123", "game-456");
+
+    expect(result).toEqual(events);
   });
 });

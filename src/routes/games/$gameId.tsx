@@ -3,6 +3,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { GameBoard } from "@/components/game/game-board";
 import { ScoreBoard } from "@/components/game/score-board";
 import { RoundHistory } from "@/components/game/round-history";
+import { LeaveGameButton } from "@/components/game/leave-game-button";
 import { useGamePolling } from "@/lib/hooks/use-game-polling";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useAppSelector } from "@/store/hooks";
@@ -27,6 +28,8 @@ function GameContent() {
   const { user } = useAuth();
   const playerId = user?.uid ?? "";
 
+  const [hasLeft, setHasLeft] = useState(false);
+
   // Polling controller
   const { refetch } = useGamePolling({ gameId, interval: 3000 });
 
@@ -49,6 +52,12 @@ function GameContent() {
       : null;
   const phase = activeRound?.status ?? null;
   const isStale = errorMsg !== null && game !== undefined;
+  // Only humans still seated in an unfinished game can leave.
+  const canLeave =
+    !isCompleted &&
+    !hasLeft &&
+    (game?.players.some((p) => p.id === playerId && p.type === "human") ??
+      false);
 
   // Keep these as local useState:
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -76,6 +85,13 @@ function GameContent() {
     } finally {
       setIsRefreshing(false);
     }
+  }, [refetch]);
+
+  const handleLeft = useCallback(() => {
+    setHasLeft(true);
+    refetch().catch(() => {
+      // polling will retry
+    });
   }, [refetch]);
 
   if (loading && !game) {
@@ -110,9 +126,27 @@ function GameContent() {
       >
         &larr; Back to lobbies
       </Link>
-      <h1 className="mb-4 text-2xl font-bold dark:text-gray-100">
-        Game {gameId.slice(0, 8)}
-      </h1>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold dark:text-gray-100">
+          Game {gameId.slice(0, 8)}
+        </h1>
+        {canLeave && (
+          <LeaveGameButton
+            gameId={gameId}
+            playerId={playerId}
+            onLeft={handleLeft}
+          />
+        )}
+      </div>
+      {hasLeft && !isCompleted && (
+        <p
+          role="status"
+          className="mb-4 text-sm text-gray-700 dark:text-gray-300"
+        >
+          You left this game. A CPU took your seat; you can keep watching to see
+          how it ends.
+        </p>
+      )}
       <div className="flex flex-col gap-4">
         <ScoreBoard
           players={game?.players ?? []}
