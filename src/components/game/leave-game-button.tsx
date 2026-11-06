@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { leaveGame } from "@/store/games/thunks";
 import {
@@ -13,12 +13,14 @@ interface LeaveGameButtonProps {
   onLeft: () => void;
 }
 
+const CONFIRM_TIMEOUT_MS = 3000;
+
 /**
- * Two-step "Leave game" control. The first tap reveals an inline confirmation
- * (no window.confirm — it's unreliable on mobile and untestable). Confirming
- * dispatches the leaveGame thunk and calls `onLeft`; the player stays on the
- * game view so they can watch how the game ends.
- * The backend replaces the departed player with a CPU so the game continues.
+ * Two-step "Leave game" button. The first tap turns it red and changes its
+ * text to ask for confirmation; tapping again within 3 seconds leaves. If not
+ * confirmed in time it reverts, which counts as a "no". On success `onLeft`
+ * is called and the player stays on the game view to watch how it ends. The
+ * backend replaces the departed player with a CPU so the game continues.
  */
 export function LeaveGameButton({
   gameId,
@@ -32,11 +34,18 @@ export function LeaveGameButton({
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!confirming || inFlight) return;
+    const timer = setTimeout(() => setConfirming(false), CONFIRM_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [confirming, inFlight]);
+
   const handleConfirm = async () => {
     setError(null);
     try {
       await dispatch(leaveGame({ playerId, gameId })).unwrap();
     } catch (e) {
+      setConfirming(false);
       if (isConditionError(e)) return; // duplicate call, ignore
       setError(messageFromRejection(e, "Unknown error"));
       return;
@@ -44,48 +53,31 @@ export function LeaveGameButton({
     onLeft();
   };
 
-  if (!confirming) {
-    return (
-      <button
-        type="button"
-        onClick={() => setConfirming(true)}
-        className="inline-flex min-h-[44px] items-center text-sm text-red-600 hover:underline dark:text-red-400"
-      >
-        Leave game
-      </button>
-    );
-  }
+  const handleClick = () => {
+    if (confirming) {
+      void handleConfirm();
+    } else {
+      setError(null);
+      setConfirming(true);
+    }
+  };
 
   return (
-    <div
-      role="group"
-      aria-label="Confirm leave game"
-      className="flex flex-wrap items-center gap-2 text-sm"
-    >
-      <span className="text-gray-700 dark:text-gray-300">
-        Leave this game? A CPU will take your seat.
-      </span>
+    <div className="flex flex-col items-end gap-1">
       <button
         type="button"
-        onClick={handleConfirm}
+        onClick={handleClick}
         disabled={inFlight}
-        className="inline-flex min-h-[44px] items-center rounded bg-red-600 px-3 font-medium text-white hover:bg-red-700 disabled:opacity-50"
+        className={`min-h-[44px] rounded-lg px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 ${
+          confirming
+            ? "bg-red-600 hover:bg-red-700"
+            : "bg-blue-600 hover:bg-blue-700"
+        }`}
       >
-        {inFlight ? "Leaving..." : "Yes, leave"}
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          setConfirming(false);
-          setError(null);
-        }}
-        disabled={inFlight}
-        className="inline-flex min-h-[44px] items-center rounded border border-gray-300 px-3 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-800"
-      >
-        Cancel
+        {inFlight ? "Leaving..." : confirming ? "Confirm leave?" : "Leave game"}
       </button>
       {error && (
-        <p role="alert" className="w-full text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           Failed to leave game: {error}
         </p>
       )}

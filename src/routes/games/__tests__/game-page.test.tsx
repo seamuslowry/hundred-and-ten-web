@@ -734,11 +734,11 @@ describe("GamePage leave game", () => {
     // Nothing sent yet — confirmation shown
     expect(mockLeaveGameApi).not.toHaveBeenCalled();
     expect(
-      screen.getByRole("group", { name: "Confirm leave game" }),
+      screen.getByRole("button", { name: "Confirm leave?" }),
     ).toBeInTheDocument();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Yes, leave" }));
+      fireEvent.click(screen.getByRole("button", { name: "Confirm leave?" }));
     });
 
     await waitFor(() => {
@@ -751,11 +751,17 @@ describe("GamePage leave game", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("cancel hides the confirmation without calling the API", async () => {
+  it("reverts to Leave game after 3 seconds without confirming", async () => {
     renderWithStore(<GamePage />);
 
     fireEvent.click(await screen.findByRole("button", { name: "Leave game" }));
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(
+      screen.getByRole("button", { name: "Confirm leave?" }),
+    ).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
 
     expect(mockLeaveGameApi).not.toHaveBeenCalled();
     expect(
@@ -770,7 +776,7 @@ describe("GamePage leave game", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Leave game" }));
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Yes, leave" }));
+      fireEvent.click(screen.getByRole("button", { name: "Confirm leave?" }));
     });
 
     await waitFor(() => {
