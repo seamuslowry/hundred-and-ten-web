@@ -1,6 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { RequireAuth } from "@/components/auth/require-auth";
 import { GameCard } from "@/components/game/game-card";
 import { LobbyCard } from "@/components/lobby/lobby-card";
 import { useAuth } from "@/lib/hooks/use-auth";
@@ -11,11 +9,7 @@ import { fetchGamesList } from "@/store/games/thunks";
 import { selectGameList } from "@/store/games/selectors";
 import { Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/lobbies/")({
-  component: LobbiesPage,
-});
-
-function LobbiesContent() {
+export function HomeContent() {
   const { user } = useAuth();
   const playerId = user?.uid ?? "";
   const dispatch = useAppDispatch();
@@ -53,7 +47,7 @@ function LobbiesContent() {
           id="games-heading"
           className="text-2xl font-bold dark:text-gray-100"
         >
-          Your Games
+          Games
         </h2>
         {showGamesLoading && (
           <p className="mt-4 text-gray-500 dark:text-gray-400">
@@ -78,7 +72,7 @@ function LobbiesContent() {
       </section>
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold dark:text-gray-100">Lobbies</h1>
+        <h2 className="text-2xl font-bold dark:text-gray-100">Lobbies</h2>
         <Link
           to="/lobbies/new"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
@@ -117,13 +111,5 @@ function LobbiesContent() {
         </div>
       )}
     </main>
-  );
-}
-
-export function LobbiesPage() {
-  return (
-    <RequireAuth>
-      <LobbiesContent />
-    </RequireAuth>
   );
 }

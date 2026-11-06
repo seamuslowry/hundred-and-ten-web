@@ -159,7 +159,7 @@ function LobbyDetailContent() {
   return (
     <main className="mx-auto max-w-md p-4">
       <Link
-        to="/lobbies"
+        to="/"
         className="mb-3 inline-flex min-h-[44px] items-center text-sm text-blue-600 hover:underline"
       >
         &larr; Back to lobbies

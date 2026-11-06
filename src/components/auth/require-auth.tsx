@@ -9,7 +9,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading && !user) {
       const returnTo = window.location.pathname;
-      const safeReturnTo = returnTo.startsWith("/") ? returnTo : "/lobbies";
+      const safeReturnTo = returnTo.startsWith("/") ? returnTo : "/";
       navigate({ to: "/", search: { returnTo: safeReturnTo } });
     }
   }, [user, loading, navigate]);

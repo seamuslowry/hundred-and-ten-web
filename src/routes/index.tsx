@@ -5,13 +5,14 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { HomeContent } from "@/components/home/home-content";
 import { SignInButton } from "@/components/auth/sign-in-button";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
 
-function Home() {
+export function Home() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const search = useSearch({ from: "/" });
@@ -22,8 +23,8 @@ function Home() {
       : null);
 
   useEffect(() => {
-    if (!loading && user) {
-      navigate({ to: returnTo || "/lobbies" });
+    if (!loading && user && returnTo) {
+      navigate({ to: returnTo });
     }
   }, [user, loading, navigate, returnTo]);
 
@@ -35,7 +36,7 @@ function Home() {
     );
   }
 
-  if (user) return null;
+  if (user) return returnTo ? null : <HomeContent />;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-4">
