@@ -68,10 +68,10 @@ export function LeaveGameButton({
         type="button"
         onClick={handleClick}
         disabled={inFlight}
-        className={`min-h-[44px] rounded-lg px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 ${
+        className={`min-h-[44px] rounded-lg px-4 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-50 ${
           confirming
-            ? "bg-red-600 hover:bg-red-700"
-            : "bg-blue-600 hover:bg-blue-700"
+            ? "bg-red-600 text-white hover:bg-red-700"
+            : "bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
         }`}
       >
         {inFlight ? "Leaving..." : confirming ? "Confirm leave?" : "Leave game"}
