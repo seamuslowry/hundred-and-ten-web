@@ -3,10 +3,17 @@ resource "azurerm_resource_group" "web" {
   location = "eastus2"
 }
 
+data "github_repository" "web" {
+  name = "hundred-and-ten-web"
+}
+
 resource "azurerm_static_web_app" "hundredandten_web" {
   name                = "hundredandten-web"
   resource_group_name = azurerm_resource_group.web.name
   location            = azurerm_resource_group.web.location
+
+  repository_url    = data.github_repository.web.html_url
+  repository_branch = data.github_repository.web.default_branch
 }
 # PR preview hostname is <prefix>-<PR#>.<location>.<rest of default host>
 # https://learn.microsoft.com/azure/static-web-apps/preview-environments
