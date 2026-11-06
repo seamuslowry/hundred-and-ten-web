@@ -16,15 +16,13 @@ permissions:
 
 env:
   SWA_NAME: hundredandten-web
+  # Preview hostname, per https://learn.microsoft.com/azure/static-web-apps/preview-environments
+  PREVIEW_HOST: ${{ vars.SWA_PREVIEW_HOST_PREFIX }}-${{ github.event.pull_request.number }}.${{ vars.SWA_PREVIEW_HOST_SUFFIX }}
+  FIREBASE_CONFIG_URL: https://identitytoolkit.googleapis.com/admin/v2/projects/${{ vars.FIREBASE_PROJECT_ID }}/config
 
 jobs:
   build_and_deploy_job:
-    # Skip closed PRs (handled below), forks and Dependabot (no OIDC token / vars).
-    if: >-
-      github.event_name == 'push' ||
-      (github.event.action != 'closed' &&
-        github.event.pull_request.head.repo.full_name == github.repository &&
-        github.actor != 'dependabot[bot]')
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
@@ -48,7 +46,7 @@ jobs:
               --query properties.apiKey \
               -o tsv)
             echo "token=$TOKEN" >> $GITHUB_OUTPUT
-      
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -61,32 +59,27 @@ jobs:
           output_location: "dist" # Built app content directory, relative to app_location - optional
           ###### End of Repository/Build Configurations ######
 
-      - name: Authenticate to Google Cloud
+      - name: 'GCP Login via OIDC'
         if: github.event_name == 'pull_request'
-        id: gcp_auth
+        id: gcp_login
         uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
           token_format: access_token
 
-      - name: Authorize preview domain in Firebase
+      - name: Authorize preview domain in Firebase Auth
         if: github.event_name == 'pull_request'
         env:
-          GCP_ACCESS_TOKEN: ${{ steps.gcp_auth.outputs.access_token }}
-          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
-          PREVIEW_URL: ${{ steps.builddeploy.outputs.static_web_app_url }}
+          AUTH: Bearer ${{ steps.gcp_login.outputs.access_token }}
         run: |
-          host="${PREVIEW_URL#https://}"
-          host="${host%%/*}"
-          .github/scripts/firebase-domain.sh add "$host"
+          BODY=$(curl -fsS -H "Authorization: $AUTH" "$FIREBASE_CONFIG_URL" \
+            | jq -c --arg h "$PREVIEW_HOST" '{authorizedDomains: (.authorizedDomains + [$h] | unique)}')
+          curl -fsS -X PATCH -H "Authorization: $AUTH" -H "Content-Type: application/json" \
+            -d "$BODY" "$FIREBASE_CONFIG_URL?updateMask=authorizedDomains" > /dev/null
 
   close_pull_request_job:
-    if: >-
-      github.event_name == 'pull_request' &&
-      github.event.action == 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.actor != 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     name: Close Pull Request Job
     steps:
@@ -108,36 +101,25 @@ jobs:
               -o tsv)
             echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
-      - name: Find preview hostname
-        id: preview
-        uses: azure/CLI@v3
+      - name: Tear down preview
+        uses: Azure/static-web-apps-deploy@v1
         with:
-          inlineScript: |
-            HOST=$(az staticwebapp environment list \
-              -n $SWA_NAME \
-              --query "[?buildId=='${{ github.event.pull_request.number }}'].hostname | [0]" \
-              -o tsv)
-            echo "host=$HOST" >> $GITHUB_OUTPUT
+          azure_static_web_apps_api_token: ${{ steps.swa_token.outputs.token }}
+          action: "close"
 
-      - name: Authenticate to Google Cloud
-        if: steps.preview.outputs.host != ''
-        id: gcp_auth
+      - name: 'GCP Login via OIDC'
+        id: gcp_login
         uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
           token_format: access_token
 
-      - name: Remove preview domain from Firebase
-        if: steps.preview.outputs.host != ''
+      - name: Remove preview domain from Firebase Auth
         env:
-          GCP_ACCESS_TOKEN: ${{ steps.gcp_auth.outputs.access_token }}
-          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
-          PREVIEW_HOST: ${{ steps.preview.outputs.host }}
-        run: .github/scripts/firebase-domain.sh remove "$PREVIEW_HOST"
-
-      - name: Close Pull Request
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ steps.swa_token.outputs.token }}
-          action: "close"
+          AUTH: Bearer ${{ steps.gcp_login.outputs.access_token }}
+        run: |
+          BODY=$(curl -fsS -H "Authorization: $AUTH" "$FIREBASE_CONFIG_URL" \
+            | jq -c --arg h "$PREVIEW_HOST" '{authorizedDomains: (.authorizedDomains - [$h])}')
+          curl -fsS -X PATCH -H "Authorization: $AUTH" -H "Content-Type: application/json" \
+            -d "$BODY" "$FIREBASE_CONFIG_URL?updateMask=authorizedDomains" > /dev/null
