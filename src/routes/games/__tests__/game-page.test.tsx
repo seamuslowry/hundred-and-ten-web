@@ -734,11 +734,11 @@ describe("GamePage leave game", () => {
     // Nothing sent yet — confirmation shown
     expect(mockLeaveGameApi).not.toHaveBeenCalled();
     expect(
-      screen.getByRole("button", { name: "Confirm leave?" }),
+      screen.getByRole("button", { name: "Are you sure?" }),
     ).toBeInTheDocument();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Confirm leave?" }));
+      fireEvent.click(screen.getByRole("button", { name: "Are you sure?" }));
     });
 
     await waitFor(() => {
@@ -756,7 +756,7 @@ describe("GamePage leave game", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Leave game" }));
     expect(
-      screen.getByRole("button", { name: "Confirm leave?" }),
+      screen.getByRole("button", { name: "Are you sure?" }),
     ).toBeInTheDocument();
 
     act(() => {
@@ -776,7 +776,7 @@ describe("GamePage leave game", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Leave game" }));
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Confirm leave?" }));
+      fireEvent.click(screen.getByRole("button", { name: "Are you sure?" }));
     });
 
     await waitFor(() => {

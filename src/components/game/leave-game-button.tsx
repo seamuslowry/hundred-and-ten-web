@@ -62,6 +62,13 @@ export function LeaveGameButton({
     }
   };
 
+  const labels = ["Leave game", "Are you sure?", "Leaving..."];
+  const current = inFlight
+    ? "Leaving..."
+    : confirming
+      ? "Are you sure?"
+      : "Leave game";
+
   return (
     <div className="flex flex-col items-end gap-1">
       <button
@@ -74,7 +81,19 @@ export function LeaveGameButton({
             : "bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
         }`}
       >
-        {inFlight ? "Leaving..." : confirming ? "Confirm leave?" : "Leave game"}
+        {/* Stack every label in one grid cell so the button keeps the width of
+            the longest one; the inactive labels are hidden, not removed. */}
+        <span className="grid">
+          {labels.map((label) => (
+            <span
+              key={label}
+              aria-hidden={label !== current}
+              className={`col-start-1 row-start-1 ${label === current ? "" : "invisible"}`}
+            >
+              {label}
+            </span>
+          ))}
+        </span>
       </button>
       {error && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
