@@ -725,7 +725,7 @@ describe("GamePage leave game", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("requires confirmation, then calls the API and navigates to /lobbies", async () => {
+  it("requires confirmation, then calls the API and stays on the game view", async () => {
     renderWithStore(<GamePage />);
 
     const leaveBtn = await screen.findByRole("button", { name: "Leave game" });
@@ -744,7 +744,11 @@ describe("GamePage leave game", () => {
     await waitFor(() => {
       expect(mockLeaveGameApi).toHaveBeenCalledWith(PLAYER_ID, GAME_ID);
     });
-    expect(mockNavigate).toHaveBeenCalledWith({ to: "/lobbies" });
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(await screen.findByText(/You left this game/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Leave game" }),
+    ).not.toBeInTheDocument();
   });
 
   it("cancel hides the confirmation without calling the API", async () => {

@@ -57,8 +57,8 @@ export const performGameAction = createAsyncThunk<
 // ─── leaveGame ────────────────────────────────────────────────────────────────
 
 /**
- * Leave a game. On success the game is dropped from the store; callers are
- * expected to navigate away (the backend automates the departed seat).
+ * Leave a game. The game stays in the store so the player can keep watching;
+ * the backend automates the departed seat.
  */
 export const leaveGame = createAsyncThunk<
   void,

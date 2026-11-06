@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { leaveGame } from "@/store/games/thunks";
 import {
@@ -10,17 +9,23 @@ import {
 interface LeaveGameButtonProps {
   gameId: string;
   playerId: string;
+  /** Called after the backend confirms the player has left. */
+  onLeft: () => void;
 }
 
 /**
  * Two-step "Leave game" control. The first tap reveals an inline confirmation
  * (no window.confirm — it's unreliable on mobile and untestable). Confirming
- * dispatches the leaveGame thunk and navigates back to the lobby list.
+ * dispatches the leaveGame thunk and calls `onLeft`; the player stays on the
+ * game view so they can watch how the game ends.
  * The backend replaces the departed player with a CPU so the game continues.
  */
-export function LeaveGameButton({ gameId, playerId }: LeaveGameButtonProps) {
+export function LeaveGameButton({
+  gameId,
+  playerId,
+  onLeft,
+}: LeaveGameButtonProps) {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const inFlight = useAppSelector(
     (s) => s.games.leaveInFlight[gameId] ?? false,
   );
@@ -36,7 +41,7 @@ export function LeaveGameButton({ gameId, playerId }: LeaveGameButtonProps) {
       setError(messageFromRejection(e, "Unknown error"));
       return;
     }
-    navigate({ to: "/lobbies" });
+    onLeft();
   };
 
   if (!confirming) {

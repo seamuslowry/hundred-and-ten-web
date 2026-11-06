@@ -51,16 +51,12 @@ export const gamesSlice = createSlice({
       .addCase(performGameAction.rejected, (state, action) => {
         state.actionInFlight[action.meta.arg.gameId] = false;
       })
-      // leaveGame lifecycle — drops the game from the store on success
+      // leaveGame lifecycle — keeps the game in the store so the view stays up
       .addCase(leaveGame.pending, (state, action) => {
         state.leaveInFlight[action.meta.arg.gameId] = true;
       })
       .addCase(leaveGame.fulfilled, (state, action) => {
-        const gameId = action.meta.arg.gameId;
-        state.leaveInFlight[gameId] = false;
-        delete state.byId[gameId];
-        delete state.errors[gameId];
-        delete state.loading[gameId];
+        state.leaveInFlight[action.meta.arg.gameId] = false;
       })
       .addCase(leaveGame.rejected, (state, action) => {
         state.leaveInFlight[action.meta.arg.gameId] = false;

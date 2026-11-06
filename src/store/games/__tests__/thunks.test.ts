@@ -321,7 +321,7 @@ describe("leaveGame thunk", () => {
     vi.restoreAllMocks();
   });
 
-  it("happy path: calls the API and drops the game from byId", async () => {
+  it("happy path: calls the API and keeps the game in byId", async () => {
     mockGetGame.mockResolvedValue(mockGame);
     mockLeaveGameApi.mockResolvedValue([]);
     const store = makeStore();
@@ -335,7 +335,7 @@ describe("leaveGame thunk", () => {
     expect(leaveGame.fulfilled.match(result)).toBe(true);
     expect(mockLeaveGameApi).toHaveBeenCalledWith(PLAYER_ID, GAME_ID);
     const state = store.getState().games;
-    expect(state.byId[GAME_ID]).toBeUndefined();
+    expect(state.byId[GAME_ID]).toEqual(mockGame);
     expect(state.leaveInFlight[GAME_ID]).toBe(false);
   });
 
