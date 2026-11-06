@@ -9,7 +9,7 @@ vi.mock("../client", () => ({
 }));
 
 import { apiFetch } from "../client";
-import { getGame, leaveGame } from "../games";
+import { getGame, leaveGame, searchGames } from "../games";
 
 const mockApiFetch = vi.mocked(apiFetch);
 
@@ -79,5 +79,28 @@ describe("leaveGame", () => {
     const result = await leaveGame("player-123", "game-456");
 
     expect(result).toEqual(events);
+  });
+});
+
+describe("searchGames", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("POSTs the query to the games search endpoint", async () => {
+    mockApiFetch.mockResolvedValue([] as never);
+    const query = {
+      searchText: "",
+      offset: 0,
+      limit: 50,
+      statuses: ["BIDDING" as const],
+    };
+
+    await searchGames("player-123", query);
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      "/players/player-123/games/search",
+      { method: "POST", body: JSON.stringify(query) },
+    );
   });
 });

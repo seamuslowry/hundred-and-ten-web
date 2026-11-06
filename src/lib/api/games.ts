@@ -1,5 +1,25 @@
 import { apiFetch } from "./client";
-import type { GameAction, Player, ApiEvent, Game } from "./types";
+import type {
+  GameAction,
+  Player,
+  ApiEvent,
+  Game,
+  SearchGamesRequest,
+} from "./types";
+
+/**
+ * Search games visible to the player. The backend returns the player's games
+ * plus any public games, so callers wanting only their own must filter.
+ */
+export function searchGames(
+  playerId: string,
+  query: SearchGamesRequest,
+): Promise<Game[]> {
+  return apiFetch(`/players/${playerId}/games/search`, {
+    method: "POST",
+    body: JSON.stringify(query),
+  });
+}
 
 export function performAction(
   playerId: string,

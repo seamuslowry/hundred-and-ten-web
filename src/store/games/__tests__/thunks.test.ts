@@ -4,22 +4,30 @@ import { configureStore } from "@reduxjs/toolkit";
 // Mock the API module before importing the thunks that depend on it.
 vi.mock("@/lib/api/games", () => ({
   getGame: vi.fn(),
+  searchGames: vi.fn(),
   performAction: vi.fn(),
   leaveGame: vi.fn(),
 }));
 
 import {
   getGame,
+  searchGames,
   performAction,
   leaveGame as leaveGameApi,
 } from "@/lib/api/games";
 import gamesReducer from "../slice";
 import lobbiesReducer from "@/store/lobbies/slice";
 import playersReducer from "@/store/players/slice";
-import { fetchGame, performGameAction, leaveGame } from "../thunks";
+import {
+  fetchGame,
+  fetchGamesList,
+  performGameAction,
+  leaveGame,
+} from "../thunks";
 import type { Game } from "@/lib/api/types";
 
 const mockGetGame = vi.mocked(getGame);
+const mockSearchGames = vi.mocked(searchGames);
 const mockPerformAction = vi.mocked(performAction);
 const mockLeaveGameApi = vi.mocked(leaveGameApi);
 
@@ -381,5 +389,53 @@ describe("leaveGame thunk", () => {
     resolveLeave();
     await first;
     expect(mockLeaveGameApi).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("fetchGamesList thunk", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("searches for ongoing games only", async () => {
+    mockSearchGames.mockResolvedValue([]);
+    const store = makeStore();
+
+    await store.dispatch(fetchGamesList({ playerId: PLAYER_ID }));
+
+    expect(mockSearchGames).toHaveBeenCalledWith(
+      PLAYER_ID,
+      expect.objectContaining({
+        statuses: ["BIDDING", "TRUMP_SELECTION", "DISCARD", "TRICKS"],
+      }),
+    );
+  });
+
+  it("keeps only games the player is in and stores them in list/byId", async () => {
+    const notMine: Game = {
+      ...mockGameB,
+      players: [{ id: OTHER_PLAYER_ID, type: "human" }],
+    };
+    mockSearchGames.mockResolvedValue([mockGame, notMine]);
+    const store = makeStore();
+
+    await store.dispatch(fetchGamesList({ playerId: PLAYER_ID }));
+
+    const state = store.getState().games;
+    expect(state.list).toEqual([GAME_ID]);
+    expect(state.byId[GAME_ID]).toEqual(mockGame);
+    expect(state.byId[GAME_ID_B]).toBeUndefined();
+    expect(state.listLoading).toBe(false);
+    expect(state.listError).toBeNull();
+  });
+
+  it("records listError when the search fails", async () => {
+    mockSearchGames.mockRejectedValue(new Error("boom"));
+    const store = makeStore();
+
+    await store.dispatch(fetchGamesList({ playerId: PLAYER_ID }));
+
+    expect(store.getState().games.listError).toBe("boom");
+    expect(store.getState().games.listLoading).toBe(false);
   });
 });

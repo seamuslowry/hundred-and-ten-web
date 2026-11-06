@@ -1,7 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 import type { RootState } from "@/store";
 import { isActiveRound } from "@/lib/api/types";
-import type { ActiveRound, Card, CompletedRound } from "@/lib/api/types";
+import type { ActiveRound, Card, CompletedRound, Game } from "@/lib/api/types";
 
 // ─── Base selector ──────────────────────────────────────────────────────────
 
@@ -74,4 +74,23 @@ export const selectMyHand = createSelector(
     const rawHand = game.active.hands[playerId];
     return Array.isArray(rawHand) ? rawHand : [];
   },
+);
+
+// ─── Game list (memoized) ───────────────────────────────────────────────────
+
+/**
+ * Returns games in the order of `state.games.list` IDs, skipping IDs that are
+ * not in `byId`.
+ */
+export const selectGameList = createSelector(
+  [
+    (state: RootState) => state.games.byId,
+    (state: RootState) => state.games.list,
+  ],
+  (byId, list): Game[] =>
+    list.reduce<Game[]>((acc, id) => {
+      const game = byId[id];
+      if (game !== undefined) acc.push(game);
+      return acc;
+    }, []),
 );

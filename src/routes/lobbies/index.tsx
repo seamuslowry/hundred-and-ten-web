@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
+import { GameCard } from "@/components/game/game-card";
 import { LobbyCard } from "@/components/lobby/lobby-card";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchLobbiesList } from "@/store/lobbies/thunks";
 import { selectLobbyList } from "@/store/lobbies/selectors";
+import { fetchGamesList } from "@/store/games/thunks";
+import { selectGameList } from "@/store/games/selectors";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/lobbies/")({
@@ -20,7 +23,12 @@ function LobbiesContent() {
   useEffect(() => {
     if (!playerId) return;
     dispatch(fetchLobbiesList({ playerId }));
+    dispatch(fetchGamesList({ playerId }));
   }, [dispatch, playerId]);
+
+  const games = useAppSelector((s) => selectGameList(s));
+  const gamesLoading = useAppSelector((s) => s.games.listLoading);
+  const gamesError = useAppSelector((s) => s.games.listError);
 
   const lobbies = useAppSelector((s) => selectLobbyList(s));
   const listLoading = useAppSelector((s) => s.lobbies.listLoading);
@@ -36,9 +44,39 @@ function LobbiesContent() {
 
   // Loading guard: only show spinner before any data has landed.
   const showLoading = listLoading && lobbies.length === 0;
+  const showGamesLoading = gamesLoading && games.length === 0;
 
   return (
     <main className="mx-auto max-w-2xl p-4">
+      <section aria-labelledby="games-heading" className="mb-8">
+        <h2
+          id="games-heading"
+          className="text-2xl font-bold dark:text-gray-100"
+        >
+          Your Games
+        </h2>
+        {showGamesLoading && (
+          <p className="mt-4 text-gray-500 dark:text-gray-400">
+            Loading games...
+          </p>
+        )}
+        {gamesError && (
+          <p className="mt-4 text-red-500 dark:text-red-400">{gamesError}</p>
+        )}
+        {!showGamesLoading && !gamesError && (
+          <div className="mt-4 space-y-2">
+            {games.map((game) => (
+              <GameCard key={game.id} game={game} playerId={playerId} />
+            ))}
+            {games.length === 0 && (
+              <p className="text-gray-500 dark:text-gray-400">
+                No games in progress.
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold dark:text-gray-100">Lobbies</h1>
         <Link

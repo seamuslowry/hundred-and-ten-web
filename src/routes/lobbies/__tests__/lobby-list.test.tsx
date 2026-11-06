@@ -9,7 +9,7 @@ import playersReducer from "@/store/players/slice";
 import type { GamesState } from "@/store/games/slice";
 import type { LobbiesState } from "@/store/lobbies/slice";
 import type { PlayersState } from "@/store/players/slice";
-import type { Lobby } from "@/lib/api/types";
+import type { Game, Lobby } from "@/lib/api/types";
 import { LobbiesPage } from "../index";
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
@@ -63,15 +63,18 @@ vi.mock("@/lib/api/players", () => ({
 
 vi.mock("@/lib/api/games", () => ({
   getGame: vi.fn(),
+  searchGames: vi.fn(),
 }));
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import { useAuth } from "@/lib/hooks/use-auth";
 import { searchLobbies } from "@/lib/api/lobbies";
+import { searchGames } from "@/lib/api/games";
 
 const mockUseAuth = vi.mocked(useAuth);
 const mockSearchLobbies = vi.mocked(searchLobbies);
+const mockSearchGames = vi.mocked(searchGames);
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -98,6 +101,46 @@ const otherLobby: Lobby = {
   invitees: [],
 };
 
+const myTurnGame: Game = {
+  id: "game-mine",
+  name: "My Turn Game",
+  players: [
+    { id: PLAYER_ID, type: "human" },
+    { id: OTHER_PLAYER_ID, type: "human" },
+  ],
+  scores: {},
+  active: {
+    status: "BIDDING",
+    dealerPlayerId: OTHER_PLAYER_ID,
+    bidHistory: [],
+    bid: null,
+    hands: {},
+    trump: null,
+    discards: {},
+    tricks: [],
+    activePlayerId: PLAYER_ID,
+    queuedActions: [],
+  },
+  completedRounds: [],
+};
+
+const waitingGame: Game = {
+  ...myTurnGame,
+  id: "game-waiting",
+  name: "Waiting Game",
+  active: {
+    ...(myTurnGame.active as object),
+    activePlayerId: OTHER_PLAYER_ID,
+  } as Game["active"],
+};
+
+const strangerGame: Game = {
+  ...myTurnGame,
+  id: "game-stranger",
+  name: "Stranger Game",
+  players: [{ id: OTHER_PLAYER_ID, type: "human" }],
+};
+
 // ─── renderWithStore helper ───────────────────────────────────────────────────
 
 function renderWithStore(
@@ -118,6 +161,9 @@ function renderWithStore(
       ? {
           games: {
             byId: {},
+            list: [],
+            listLoading: false,
+            listError: null,
             loading: {},
             actionInFlight: {},
             leaveInFlight: {},
@@ -165,6 +211,7 @@ function setupAuth(uid: string | null = PLAYER_ID) {
 describe("LobbiesPage (lobby list)", () => {
   beforeEach(() => {
     setupAuth();
+    mockSearchGames.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -219,5 +266,49 @@ describe("LobbiesPage (lobby list)", () => {
     await waitFor(() => {
       expect(screen.getByText("Network down")).toBeInTheDocument();
     });
+  });
+
+  it("shows the player's ongoing games alongside lobbies", async () => {
+    mockSearchLobbies.mockResolvedValue([otherLobby]);
+    mockSearchGames.mockResolvedValue([myTurnGame, waitingGame, strangerGame]);
+
+    renderWithStore(<LobbiesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("My Turn Game")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Waiting Game")).toBeInTheDocument();
+    expect(screen.queryByText("Stranger Game")).toBeNull();
+    expect(screen.getByText("Other Lobby")).toBeInTheDocument();
+
+    // Only the game where it is the player's move gets the badge
+    expect(screen.getAllByText("Your turn")).toHaveLength(1);
+    expect(screen.getByText("My Turn Game").closest("a")).toHaveAttribute(
+      "href",
+      "/games/game-mine",
+    );
+  });
+
+  it("shows an empty state when the player has no ongoing games", async () => {
+    mockSearchLobbies.mockResolvedValue([otherLobby]);
+    mockSearchGames.mockResolvedValue([]);
+
+    renderWithStore(<LobbiesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("No games in progress.")).toBeInTheDocument();
+    });
+  });
+
+  it("still shows lobbies when loading games fails", async () => {
+    mockSearchLobbies.mockResolvedValue([otherLobby]);
+    mockSearchGames.mockRejectedValue(new Error("games down"));
+
+    renderWithStore(<LobbiesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("games down")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Other Lobby")).toBeInTheDocument();
   });
 });
